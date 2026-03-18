@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>APEX — COO Perso</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-dim: #8B6E2E;
+    --gold-glow: rgba(201,168,76,0.15);
+    --black: #080808;
+    --surface: #111111;
+    --surface2: #181818;
+    --surface3: #222222;
+    --border: rgba(201,168,76,0.2);
+    --border-dim: rgba(255,255,255,0.06);
+    --text: #F0EDE6;
+    --text-dim: #888880;
+    --text-muted: #444440;
+    --red: #E05252;
+    --green: #52B788;
+    --orange: #E07B35;
+    --blue: #5290E0;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* HEADER */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,8,8,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4);
+  }
+
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* NAV TABS */
+  .nav {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-dim);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 12px;
+    gap: 4px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .nav-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-gold {
+    border-color: var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(201,168,76,0.05) 100%);
+  }
+
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* STAT GRID */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    line-height: 1;
+    letter-spacing: 1px;
+  }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-bottom: 16px; }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .progress-label { font-size: 12px; color: var(--text-dim); }
+  .progress-value { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
+  .progress-bar {
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-fill.green { background: linear-gradient(90deg, #2d7a52, var(--green)); }
+  .progress-fill.red { background: linear-gradient(90deg, #8b2020, var(--red)); }
+  .progress-fill.orange { background: linear-gradient(90deg, #8b4a1a, var(--orange)); }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 14px; }
+  .input-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .input-row { display: flex; gap: 8px; }
+
+  input[type="number"], input[type="text"], input[type="time"], select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold);
+  }
+  select option { background: var(--surface2); }
+  textarea { resize: none; min-height: 80px; font-family: 'DM Sans', sans-serif; font-size: 13px; }
+
+  /* BUTTONS */
+  .btn {
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, #8B6E2E, var(--gold));
+    color: #000;
+  }
+  .btn-gold:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gold);
+  }
+  .btn-sm {
+    padding: 8px 14px;
+    font-size: 12px;
+    width: auto;
+  }
+  .btn-danger {
+    background: rgba(224,82,82,0.15);
+    border: 1px solid rgba(224,82,82,0.3);
+    color: var(--red);
+  }
+
+  /* TIMELINE */
+  .timeline { position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-dim);
+  }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    padding: 8px 0;
+    position: relative;
+  }
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 2px solid var(--gold);
+    flex-shrink: 0;
+    margin-top: 4px;
+    margin-left: 14px;
+    z-index: 1;
+  }
+  .timeline-dot.done { background: var(--green); border-color: var(--green); }
+  .timeline-dot.now { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .timeline-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    width: 40px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .timeline-content { flex: 1; }
+  .timeline-action { font-size: 13px; color: var(--text); font-weight: 500; }
+  .timeline-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* WATER TRACKER */
+  .water-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .water-glasses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+  }
+  .water-glass {
+    width: 28px;
+    height: 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px 3px 6px 6px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .water-glass.filled { border-color: var(--blue); }
+  .water-glass-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(82,144,224,0.8), rgba(82,144,224,0.3));
+    height: 0%;
+    transition: height 0.3s;
+  }
+  .water-glass.filled .water-glass-fill { height: 100%; }
+
+  /* ALERT */
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .alert-warn { background: rgba(224,123,53,0.12); border: 1px solid rgba(224,123,53,0.3); color: var(--orange); }
+  .alert-success { background: rgba(82,183,136,0.12); border: 1px solid rgba(82,183,136,0.3); color: var(--green); }
+  .alert-danger { background: rgba(224,82,82,0.12); border: 1px solid rgba(224,82,82,0.3); color: var(--red); }
+  .alert-info { background: var(--gold-glow); border: 1px solid var(--border); color: var(--gold); }
+
+  /* CHART */
+  .chart-wrap {
+    position: relative;
+    height: 160px;
+    margin-top: 8px;
+  }
+  canvas { width: 100% !important; }
+
+  /* AI RESPONSE */
+  .ai-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    position: relative;
+  }
+  .ai-bubble::before {
+    content: 'APEX';
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .ai-loading {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .ai-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 1.2s infinite;
+  }
+  .ai-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+  /* EXERCISE ROWS */
+  .exercise-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .exercise-row:last-child { border-bottom: none; }
+  .exercise-name { font-size: 13px; font-weight: 500; }
+  .exercise-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .exercise-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .badge-up { background: rgba(82,183,136,0.15); color: var(--green); }
+  .badge-flat { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+  .badge-down { background: rgba(224,82,82,0.15); color: var(--red); }
+  .badge-new { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  /* SECTION DIVIDER */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+  }
+
+  /* TOGGLE */
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .toggle-label { font-size: 13px; }
+  .toggle {
+    width: 40px;
+    height: 22px;
+    background: var(--surface3);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: none;
+  }
+  .toggle.on { background: var(--gold); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  /* SUPPLEMENT CHECKLIST */
+  .supp-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-dim);
+    cursor: pointer;
+  }
+  .supp-item:last-child { border-bottom: none; }
+  .supp-check {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .supp-check.checked { background: var(--gold); border-color: var(--gold); }
+  .supp-check.checked::after { content: '✓'; font-size: 11px; color: #000; font-weight: 700; }
+  .supp-name { font-size: 13px; flex: 1; }
+  .supp-name.checked { color: var(--text-dim); text-decoration: line-through; }
+  .supp-dose { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .supp-time { font-size: 10px; color: var(--text-muted); }
+
+  /* SPLIT TAG */
+  .split-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .tag-push { background: rgba(224,82,82,0.15); color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+  .tag-pull { background: rgba(82,144,224,0.15); color: var(--blue); border: 1px solid rgba(82,144,224,0.3); }
+  .tag-legs { background: rgba(82,183,136,0.15); color: var(--green); border: 1px solid rgba(82,183,136,0.3); }
+  .tag-upper { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid var(--border); }
+  .tag-rest { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border-dim); }
+
+  /* BOTTOM PADDING */
+  .bottom-pad { height: 40px; }
+
+  /* FORM ROW */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* WEIGHT DELTA */
+  .delta-positive { color: var(--green); }
+  .delta-negative { color: var(--red); }
+  .delta-neutral { color: var(--text-dim); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 20px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">APEX</div>
+  <div class="header-date" id="headerDate">—</div>
+</div>
+
+<nav class="nav">
+  <button class="nav-tab active" onclick="showPage('today',this)">AUJOURD'HUI</button>
+  <button class="nav-tab" onclick="showPage('update',this)">UPDATE</button>
+  <button class="nav-tab" onclick="showPage('workout',this)">SÉANCE</button>
+  <button class="nav-tab" onclick="showPage('progress',this)">PROGRESSION</button>
+  <button class="nav-tab" onclick="showPage('body',this)">CORPS</button>
+  <button class="nav-tab" onclick="showPage('supps',this)">SUPP</button>
+</nav>
+
+<!-- ============ PAGE: TODAY ============ -->
+<div id="page-today" class="page active">
+
+  <!-- Status Cards -->
+  <div class="stat-grid" style="margin-bottom:12px;">
+    <div class="stat-box">
+      <div class="stat-value" id="todayWeight">—</div>
+      <div class="stat-label">POIDS KG</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-value" id="todayBF">—</div>
+      <div class="stat-label">BODY FAT %</div>
+    </div>
+  </div>
+
+  <!-- Objectif Progress -->
+  <div class="card card-gold">
+    <div class="card-title">🎯 OBJECTIF — RECOMPOSITION</div>
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">Masse grasse à éliminer</span>
+        <span class="progress-value" id="fatProgress">—</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill red" id="fatBar" style="width:0%"></div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">Masse maigre à construire</span>
+        <span class="progress-value" id="muscleProgress">—</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill green" id="muscleBar" style="width:0%"></div></div>
+    </div>
+    <div class="progress-wrap" style="margin-bottom:0">
+      <div class="progress-header">
+        <span class="progress-label">Eau aujourd'hui</span>
+        <span class="progress-value" id="waterProgressText">0 / 4.5L</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="waterBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Hydratation -->
+  <div class="card">
+    <div class="card-title">💧 HYDRATATION</div>
+    <div class="water-display">
+      <div class="water-glasses" id="waterGlasses"></div>
+    </div>
+    <div class="input-row" style="gap:8px;align-items:center;">
+      <input type="number" id="waterInput" placeholder="Ex: 0.5" step="0.25" min="0" max="4.5" style="flex:1">
+      <button class="btn btn-gold btn-sm" onclick="addWater()">+ Ajouter</button>
+      <button class="btn btn-outline btn-sm" onclick="resetWater()">Reset</button>
+    </div>
+    <div id="waterAlert" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Séance du jour -->
+  <div class="card">
+    <div class="card-title">🏋️ SÉANCE DU JOUR</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <span id="todaySession" class="split-tag tag-rest">REPOS</span>
+      <span id="todaySessionTime" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);">—</span>
+    </div>
+    <div id="todaySessionNote" style="font-size:12px;color:var(--text-dim);"></div>
+  </div>
+
+  <!-- ZMA Timer -->
+  <div class="card" id="zmaCard">
+    <div class="card-title">⏱ FENÊTRE ZMA</div>
+    <div id="zmaInfo" style="font-size:13px;color:var(--text-dim);">Log ton dernier repas pour calculer.</div>
+  </div>
+
+  <!-- Planning Timeline -->
+  <div class="card">
+    <div class="card-title">📋 PLANNING DU JOUR</div>
+    <div class="timeline" id="todayTimeline">
+      <div style="font-size:12px;color:var(--text-dim);">Lance une Update pour générer ton planning.</div>
+    </div>
+  </div>
+
+  <!-- Alerte Salt Flush -->
+  <div id="saltFlushAlert"></div>
+
+</div>
+
+<!-- ============ PAGE: UPDATE ============ -->
+<div id="page-update" class="page">
+
+  <div class="card card-gold">
+    <div class="card-title">⚡ UPDATE DU JOUR</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">30 secondes. Apex recalcule tout.</p>
+
+    <div class="input-group">
+      <label class="input-label">HEURE SALLE (laisser vide si repos)</label>
+      <input type="time" id="upGymTime">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">TYPE DE SÉANCE</label>
+      <select id="upSessionType">
+        <option value="rest">Repos</option>
+        <option value="push">Push</option>
+        <option value="pull">Pull</option>
+        <option value="legs">Legs</option>
+        <option value="upper">Upper Body</option>
+        <option value="fullbody">Full Body (post-cheat)</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">EAU BUVUE ACTUELLEMENT (L)</label>
+      <input type="number" id="upWater" placeholder="Ex: 1.5" step="0.25" min="0" max="5">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">HEURE DU DERNIER REPAS</label>
+      <input type="time" id="upLastMeal">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">CHEAT MEAL ?</label>
+      <select id="upCheat">
+        <option value="none">Non</option>
+        <option value="minor">Léger (resto, sauce)</option>
+        <option value="kfc">KFC / Fast food</option>
+        <option value="pizza">Pizza</option>
+        <option value="combo">Combo 2j+ (en cours)</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">FATIGUE / SOMMEIL</label>
+      <select id="upFatigue">
+        <option value="good">Reposé ✅</option>
+        <option value="medium">Moyen</option>
+        <option value="bad">Mauvaise nuit 🔴</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">INFOS SUPPLÉMENTAIRES (optionnel)</label>
+      <textarea id="upExtra" placeholder="Ex: Cours jusqu'à 17h, sortie prévue ce soir..."></textarea>
+    </div>
+
+    <button class="btn btn-gold" onclick="sendUpdate()" id="updateBtn">
+      ⚡ ENVOYER À APEX
+    </button>
+  </div>
+
+  <div id="updateResponse"></div>
+
+</div>
+
+<!-- ============ PAGE: WORKOUT ============ -->
+<div id="page-workout" class="page">
+
+  <div class="card">
+    <div class="card-title">📝 LOG DE SÉANCE</div>
+
+    <div class="input-group">
+      <label class="input-label">TYPE</label>
+      <select id="wkType">
+        <option value="push">Push</option>
+        <option value="pull">Pull</option>
+        <option value="legs">Legs</option>
+        <option value="upper">Upper Body</option>
+        <option value="fullbody">Full Body</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">DATE</label>
+      <input type="date" id="wkDate">
+    </div>
+
+    <div id="wkExercises"></div>
+
+    <button class="btn btn-outline" style="margin-bottom:10px;" onclick="showAddExercise()">+ Ajouter exercice</button>
+    <button class="btn btn-gold" onclick="saveWorkout()">💾 Sauvegarder séance</button>
+  </div>
+
+  <!-- Historique -->
+  <div class="section-label">HISTORIQUE</div>
+  <div id="workoutHistory"></div>
+
+</div>
+
+<!-- ============ PAGE: PROGRESS ============ -->
+<div id="page-progress" class="page">
+
+  <div class="card">
+    <div class="card-title">📊 SÉLECTIONNER EXERCICE</div>
+    <select id="progressExercise" onchange="renderProgress()">
+      <option value="">— Choisir —</option>
+    </select>
+  </div>
+
+  <div id="progressContent"></div>
+
+</div>
+
+<!-- ============ PAGE: BODY ============ -->
+<div id="page-body" class="page">
+
+  <div class="card card-gold">
+    <div class="card-title">⚖️ LOG POIDS / COMPO</div>
+    <div class="form-row">
+      <div class="input-group">
+        <label class="input-label">POIDS (kg)</label>
+        <input type="number" id="bodyWeight" placeholder="75.3" step="0.1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">BODY FAT (%)</label>
+        <input type="number" id="bodyBF" placeholder="14.0" step="0.1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="input-group">
+        <label class="input-label">MASSE MAIGRE (kg)</label>
+        <input type="number" id="bodyLM" placeholder="64.8" step="0.1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">DATE</label>
+        <input type="date" id="bodyDate">
+      </div>
+    </div>
+    <button class="btn btn-gold" onclick="saveBodyEntry()">💾 Sauvegarder</button>
+  </div>
+
+  <!-- Stats actuelles vs objectif -->
+  <div class="card">
+    <div class="card-title">🎯 VS OBJECTIF</div>
+    <div class="stat-grid stat-grid-3">
+      <div class="stat-box">
+        <div class="stat-value" id="bodyStatPoids">—</div>
+        <div class="stat-label">POIDS</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="bodyStatBF">—</div>
+        <div class="stat-label">BODY FAT</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="bodyStatLM">—</div>
+        <div class="stat-label">MASSE MAIGRE</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;" id="bodyGoalStatus"></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <div class="card-title">📈 ÉVOLUTION</div>
+    <select id="bodyChartMetric" onchange="renderBodyChart()" style="margin-bottom:10px;">
+      <option value="weight">Poids</option>
+      <option value="bf">Body Fat %</option>
+      <option value="lm">Masse Maigre</option>
+    </select>
+    <div class="chart-wrap">
+      <canvas id="bodyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div class="section-label">HISTORIQUE</div>
+  <div id="bodyHistory"></div>
+
+</div>
+
+<!-- ============ PAGE: SUPPLEMENTS ============ -->
+<div id="page-supps" class="page">
+
+  <div class="card">
+    <div class="card-title">☀️ MATIN / JOUR</div>
+    <div id="suppMatin"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏋️ AUTOUR DE LA SALLE</div>
+    <div id="suppSalle"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌙 NUIT</div>
+    <div id="suppNuit"></div>
+  </div>
+
+  <button class="btn btn-outline" style="margin-top:4px;" onclick="resetSupps()">Reset checklist</button>
+
+</div>
+
+<!-- ADD EXERCISE MODAL -->
+<div class="modal-overlay" id="exerciseModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">AJOUTER EXERCICE</div>
+
+    <div class="input-group">
+      <label class="input-label">EXERCICE</label>
+      <select id="exName">
+        <option value="">— Choisir —</option>
+        <optgroup label="PUSH">
+          <option>Bench Press</option>
+          <option>Incline Press</option>
+          <option>Pec Deck</option>
+          <option>Dips</option>
+        </optgroup>
+        <optgroup label="PULL">
+          <option>Cable Row</option>
+          <option>Lat Pulldown</option>
+          <option>Assisted Pull-ups</option>
+          <option>Single Arm Row</option>
+          <option>Concentration Curl</option>
+          <option>Superset Bi/Tri Cable</option>
+        </optgroup>
+        <optgroup label="LEGS">
+          <option>Leg Press</option>
+          <option>Smith Squat</option>
+          <option>Leg Extension</option>
+          <option>Lying Leg Curl</option>
+        </optgroup>
+        <optgroup label="CARDIO">
+          <option>Tabata (durée)</option>
+          <option>Stair Cardio</option>
+        </optgroup>
+        <option value="custom">Autre (personnalisé)</option>
+      </select>
+    </div>
+
+    <div id="customExNameWrap" style="display:none;" class="input-group">
+      <label class="input-label">NOM PERSONNALISÉ</label>
+      <input type="text" id="customExName" placeholder="Nom de l'exercice">
+    </div>
+
+    <div class="form-row">
+      <div class="input-group">
+        <label class="input-label">POIDS MAX (kg)</label>
+        <input type="number" id="exWeight" placeholder="80" step="0.5">
+      </div>
+      <div class="input-group">
+        <label class="input-label">SÉRIES × REPS</label>
+        <input type="text" id="exSetsReps" placeholder="4×8">
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">NOTES (optionnel)</label>
+      <input type="text" id="exNotes" placeholder="Sensation, technique...">
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-gold" style="flex:1" onclick="addExerciseToLog()">Ajouter</button>
+      <button class="btn btn-outline" style="flex:0.4" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+
+// ==================== STATE ====================
+const STORAGE_KEY = 'apex_data_v1';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultData(); }
+  catch { return getDefaultData(); }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getDefaultData() {
+  return {
+    water: 0,
+    waterDate: '',
+    lastMeal: '',
+    bodyEntries: [],  // {date, weight, bf, lm}
+    workouts: [],     // {date, type, exercises:[{name,weight,setsReps,notes}]}
+    supps: {},        // {date: {suppId: bool}}
+    saltFlushDays: 0,
+    saltFlushStart: '',
+    todaySession: {type:'rest', time:''},
+    lastUpdate: null
+  };
+}
+
+let DATA = loadData();
+let currentWorkoutExercises = [];
+let bodyChartInstance = null;
+let progressChartInstance = null;
+
+// ==================== SUPPLEMENTS ====================
+const SUPPS_MATIN = [
+  {id:'omega3', name:'Omega-3', dose:'x2'},
+  {id:'lionsmane', name:"Lion's Mane", dose:'x2'},
+  {id:'bacteria_m', name:'Bacteria / Probiotiques', dose:'x1'},
+  {id:'bcomplex', name:'B-Complex', dose:'x1'},
+  {id:'ashwa', name:'Ashwagandha KSM-66', dose:'x1'},
+  {id:'biotine', name:'Biotine 1000µg', dose:'x2'},
+  {id:'electrolytes', name:'Électrolytes', dose:'selon hydratation'},
+];
+const SUPPS_SALLE = [
+  {id:'glucosamine', name:'Glucosamine', dose:'x1 AVANT'},
+  {id:'whey', name:'Whey', dose:'1 scoop APRÈS'},
+  {id:'creatine', name:'Créatine', dose:'5g APRÈS'},
+  {id:'collagene', name:'Collagène Marin', dose:'x3 APRÈS'},
+];
+const SUPPS_NUIT = [
+  {id:'zma', name:'ZMA', dose:'x2 — 2h après dernier repas'},
+  {id:'bacteria_n', name:'Bacteria / Probiotiques', dose:'x1'},
+];
+
+function renderSupps() {
+  const today = getTodayStr();
+  if (!DATA.supps[today]) DATA.supps[today] = {};
+
+  function renderList(container, list) {
+    container.innerHTML = list.map(s => {
+      const checked = DATA.supps[today][s.id];
+      return `<div class="supp-item" onclick="toggleSupp('${s.id}')">
+        <div class="supp-check ${checked?'checked'}"></div>
+        <div class="supp-name ${checked?'checked'}">${s.name}</div>
+        <div class="supp-dose">${s.dose}</div>
+      </div>`;
+    }).join('');
+  }
+
+  renderList(document.getElementById('suppMatin'), SUPPS_MATIN);
+  renderList(document.getElementById('suppSalle'), SUPPS_SALLE);
+  renderList(document.getElementById('suppNuit'), SUPPS_NUIT);
+}
+
+function toggleSupp(id) {
+  const today = getTodayStr();
+  if (!DATA.supps[today]) DATA.supps[today] = {};
+  DATA.supps[today][id] = !DATA.supps[today][id];
+  saveData(DATA);
+  renderSupps();
+}
+
+function resetSupps() {
+  const today = getTodayStr();
+  DATA.supps[today] = {};
+  saveData(DATA);
+  renderSupps();
+}
+
+// ==================== WATER ====================
+function renderWater() {
+  const today = getTodayStr();
+  if (DATA.waterDate !== today) { DATA.water = 0; DATA.waterDate = today; saveData(DATA); }
+
+  const glasses = document.getElementById('waterGlasses');
+  const total = 4.5;
+  const steps = 9; // 0.5L per glass
+  const filled = Math.round((DATA.water / total) * steps);
+
+  glasses.innerHTML = Array.from({length: steps}, (_, i) =>
+    `<div class="water-glass ${i < filled ? 'filled' : ''}" onclick="quickWater(${(i+1)*0.5})">
+      <div class="water-glass-fill"></div>
+    </div>`
+  ).join('');
+
+  const pct = Math.min((DATA.water / total) * 100, 100);
+  document.getElementById('waterBar').style.width = pct + '%';
+  document.getElementById('waterProgressText').textContent = `${DATA.water.toFixed(1)} / 4.5L`;
+
+  // Alert
+  const hour = new Date().getHours();
+  const alertEl = document.getElementById('waterAlert');
+  const remaining = 4.5 - DATA.water;
+  if (DATA.water >= 4.5) {
+    alertEl.innerHTML = `<div class="alert alert-success">✅ Objectif atteint ! ${DATA.water.toFixed(1)}L</div>`;
+  } else if (hour >= 15 && DATA.water < 2) {
+    alertEl.innerHTML = `<div class="alert alert-danger">⚠️ RETARD CRITIQUE — ${DATA.water.toFixed(1)}L seulement à ${hour}h. Rattrapage : ${remaining.toFixed(1)}L restants, bois 500ml toutes les 45min.</div>`;
+  } else if (hour >= 12 && DATA.water < 1.5) {
+    alertEl.innerHTML = `<div class="alert alert-warn">⚡ En retard sur l'hydratation. ${remaining.toFixed(1)}L restants.</div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
+}
+
+function addWater() {
+  const val = parseFloat(document.getElementById('waterInput').value);
+  if (!val || isNaN(val)) return;
+  DATA.water = Math.min(DATA.water + val, 5);
+  document.getElementById('waterInput').value = '';
+  saveData(DATA);
+  renderWater();
+}
+
+function quickWater(target) {
+  DATA.water = target;
+  saveData(DATA);
+  renderWater();
+}
+
+function resetWater() {
+  DATA.water = 0;
+  saveData(DATA);
+  renderWater();
+}
+
+// ==================== ZMA ====================
+function updateZMA() {
+  const el = document.getElementById('zmaInfo');
+  if (!DATA.lastMeal) { el.textContent = 'Log ton dernier repas pour calculer.'; return; }
+  const [h, m] = DATA.lastMeal.split(':').map(Number);
+  const zmaH = h + 2;
+  const zmaMin = m;
+  const zmaStr = `${String(zmaH % 24).padStart(2,'0')}:${String(zmaMin).padStart(2,'0')}`;
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const zmaMins = (zmaH % 24) * 60 + zmaMin;
+  const diff = zmaMins - nowMins;
+
+  if (diff > 0) {
+    el.innerHTML = `Dernier repas : <strong>${DATA.lastMeal}</strong><br>
+    ZMA à prendre à : <strong style="color:var(--gold)">${zmaStr}</strong><br>
+    <span style="color:var(--text-dim);font-size:12px;">Dans ${Math.floor(diff/60)}h${diff%60 > 0 ? String(diff%60).padStart(2,'0')+'min' : ''}</span>`;
+  } else {
+    el.innerHTML = `<span style="color:var(--green)">✅ Fenêtre ZMA atteinte (${zmaStr}). Prends-le maintenant.</span>`;
+  }
+}
+
+// ==================== BODY TRACKING ====================
+function saveBodyEntry() {
+  const weight = parseFloat(document.getElementById('bodyWeight').value);
+  const bf = parseFloat(document.getElementById('bodyBF').value);
+  const lm = parseFloat(document.getElementById('bodyLM').value);
+  const date = document.getElementById('bodyDate').value;
+
+  if (!date || isNaN(weight)) { alert('Date et poids requis.'); return; }
+
+  // Remove existing entry for same date
+  DATA.bodyEntries = DATA.bodyEntries.filter(e => e.date !== date);
+  DATA.bodyEntries.push({date, weight, bf: bf || null, lm: lm || null});
+  DATA.bodyEntries.sort((a,b) => a.date.localeCompare(b.date));
+  saveData(DATA);
+
+  document.getElementById('bodyWeight').value = '';
+  document.getElementById('bodyBF').value = '';
+  document.getElementById('bodyLM').value = '';
+
+  renderBodyPage();
+  renderTodayStats();
+}
+
+function renderBodyPage() {
+  renderBodyStats();
+  renderBodyChart();
+  renderBodyHistory();
+}
+
+function renderBodyStats() {
+  const entries = DATA.bodyEntries;
+  if (!entries.length) return;
+  const latest = entries[entries.length - 1];
+
+  // Targets
+  const targetWeight = 73.75;
+  const targetBF = 11.5;
+  const targetLM = 65.5;
+  const startWeight = 75.3;
+  const startBF = 14.0;
+  const startLM = 64.8;
+
+  document.getElementById('bodyStatPoids').textContent = latest.weight?.toFixed(1) || '—';
+  document.getElementById('bodyStatBF').textContent = latest.bf ? latest.bf.toFixed(1)+'%' : '—';
+  document.getElementById('bodyStatLM').textContent = latest.lm ? latest.lm.toFixed(1) : '—';
+
+  // Goal status
+  const goalEl = document.getElementById('bodyGoalStatus');
+  let html = '';
+
+  if (latest.bf) {
+    const fatLost = ((startBF/100 * startWeight) - (latest.bf/100 * latest.weight)).toFixed(2);
+    const fatTarget = 2.3;
+    const fatPct = Math.min((fatLost / fatTarget) * 100, 100);
+    html += `<div class="progress-wrap">
+      <div class="progress-header"><span class="progress-label">Gras éliminé</span><span class="progress-value">${fatLost}kg / 2.3kg</span></div>
+      <div class="progress-bar"><div class="progress-fill red" style="width:${fatPct}%"></div></div>
+    </div>`;
+  }
+
+  if (latest.lm) {
+    const muscleGain = (latest.lm - startLM).toFixed(2);
+    const muscleTarget = 0.7;
+    const musclePct = Math.min(Math.max((muscleGain / muscleTarget) * 100, 0), 100);
+    const color = muscleGain >= 0 ? 'green' : 'red';
+    html += `<div class="progress-wrap">
+      <div class="progress-header"><span class="progress-label">Masse maigre</span><span class="progress-value ${muscleGain >= 0 ? 'delta-positive' : 'delta-negative'}">${muscleGain >= 0 ? '+' : ''}${muscleGain}kg</span></div>
+      <div class="progress-bar"><div class="progress-fill ${color}" style="width:${musclePct}%"></div></div>
+    </div>`;
+  }
+
+  goalEl.innerHTML = html;
+
+  // Update fat/muscle progress in Today tab
+  if (latest.bf) {
+    const fatLost = ((startBF/100 * startWeight) - (latest.bf/100 * latest.weight)).toFixed(2);
+    const fatPct = Math.min((fatLost / 2.3) * 100, 100);
+    document.getElementById('fatProgress').textContent = `${fatLost}kg / 2.3kg`;
+    document.getElementById('fatBar').style.width = fatPct + '%';
+  }
+  if (latest.lm) {
+    const muscleGain = Math.max(latest.lm - startLM, 0).toFixed(2);
+    const musclePct = Math.min((muscleGain / 0.7) * 100, 100);
+    document.getElementById('muscleProgress').textContent = `+${muscleGain}kg / 0.7kg`;
+    document.getElementById('muscleBar').style.width = musclePct + '%';
+  }
+
+  document.getElementById('todayWeight').textContent = latest.weight?.toFixed(1) || '—';
+  document.getElementById('todayBF').textContent = latest.bf ? latest.bf.toFixed(1)+'%' : '—';
+}
+
+function renderBodyChart() {
+  const metric = document.getElementById('bodyChartMetric').value;
+  const entries = DATA.bodyEntries;
+
+  const labels = entries.map(e => e.date.slice(5)); // MM-DD
+  let values, color, label;
+
+  if (metric === 'weight') {
+    values = entries.map(e => e.weight);
+    color = '#C9A84C'; label = 'Poids (kg)';
+  } else if (metric === 'bf') {
+    values = entries.map(e => e.bf).filter(v => v);
+    color = '#E05252'; label = 'Body Fat %';
+  } else {
+    values = entries.map(e => e.lm).filter(v => v);
+    color = '#52B788'; label = 'Masse Maigre (kg)';
+  }
+
+  const ctx = document.getElementById('bodyChart').getContext('2d');
+  if (bodyChartInstance) bodyChartInstance.destroy();
+
+  bodyChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data: values,
+        borderColor: color,
+        backgroundColor: color + '20',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: color,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#888880', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#888880', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderBodyHistory() {
+  const el = document.getElementById('bodyHistory');
+  const entries = [...DATA.bodyEntries].reverse().slice(0, 10);
+  if (!entries.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-dim)">Aucune entrée.</div>'; return; }
+
+  el.innerHTML = entries.map((e, i) => {
+    const prev = DATA.bodyEntries[DATA.bodyEntries.length - 1 - i - 1];
+    const delta = prev ? (e.weight - prev.weight).toFixed(1) : null;
+    const deltaStr = delta ? `<span class="${delta > 0 ? 'delta-negative' : 'delta-positive'}">${delta > 0 ? '+' : ''}${delta}kg</span>` : '';
+    return `<div class="card" style="margin-bottom:8px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim)">${e.date}</div>
+          <div style="font-size:16px;font-weight:600;margin-top:2px;">${e.weight}kg ${deltaStr}</div>
+          ${e.bf ? `<div style="font-size:12px;color:var(--text-dim)">BF: ${e.bf}% | Maigre: ${e.lm || '—'}kg</div>` : ''}
+        </div>
+        <button onclick="deleteBodyEntry('${e.date}')" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteBodyEntry(date) {
+  DATA.bodyEntries = DATA.bodyEntries.filter(e => e.date !== date);
+  saveData(DATA);
+  renderBodyPage();
+}
+
+// ==================== WORKOUT ====================
+function renderWorkoutLog() {
+  const type = document.getElementById('wkType').value;
+  const container = document.getElementById('wkExercises');
+
+  const presets = {
+    push: ['Bench Press', 'Incline Press', 'Pec Deck', 'Dips'],
+    pull: ['Lat Pulldown', 'Assisted Pull-ups', 'Cable Row', 'Single Arm Row', 'Superset Bi/Tri Cable', 'Concentration Curl'],
+    legs: ['Leg Press', 'Smith Squat', 'Leg Extension', 'Lying Leg Curl', 'Stair Cardio'],
+    upper: ['Bench Press', 'Incline Press', 'Cable Row', 'Lat Pulldown', 'Superset Bi/Tri Cable', 'Dips'],
+    fullbody: ['Bench Press', 'Leg Press', 'Cable Row', 'Lat Pulldown', 'Leg Extension']
+  };
+
+  // Init exercises if switching type
+  if (currentWorkoutExercises.length === 0 || currentWorkoutExercises[0]._type !== type) {
+    currentWorkoutExercises = (presets[type] || []).map(name => ({name, weight:'', setsReps:'', notes:'', _type: type}));
+  }
+
+  renderExerciseInputs(container);
+}
+
+function renderExerciseInputs(container) {
+  container.innerHTML = currentWorkoutExercises.map((ex, i) => `
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border-dim);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:600;">${ex.name}</div>
+        <button onclick="removeExercise(${i})" style="background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;">×</button>
+      </div>
+      <div class="form-row">
+        <div>
+          <div class="input-label">POIDS MAX (kg)</div>
+          <input type="number" step="0.5" value="${ex.weight}" onchange="updateExercise(${i},'weight',this.value)" placeholder="0">
+        </div>
+        <div>
+          <div class="input-label">SÉRIES×REPS</div>
+          <input type="text" value="${ex.setsReps}" onchange="updateExercise(${i},'setsReps',this.value)" placeholder="4×8">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateExercise(i, field, val) {
+  currentWorkoutExercises[i][field] = val;
+}
+
+function removeExercise(i) {
+  currentWorkoutExercises.splice(i, 1);
+  renderExerciseInputs(document.getElementById('wkExercises'));
+}
+
+function showAddExercise() {
+  document.getElementById('exerciseModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('exerciseModal').classList.remove('open');
+}
+
+function addExerciseToLog() {
+  let name = document.getElementById('exName').value;
+  if (name === 'custom') name = document.getElementById('customExName').value;
+  if (!name) return;
+  const weight = document.getElementById('exWeight').value;
+  const setsReps = document.getElementById('exSetsReps').value;
+  const notes = document.getElementById('exNotes').value;
+  const type = document.getElementById('wkType').value;
+  currentWorkoutExercises.push({name, weight, setsReps, notes, _type: type});
+  renderExerciseInputs(document.getElementById('wkExercises'));
+  closeModal();
+}
+
+document.getElementById('exName').addEventListener('change', function() {
+  document.getElementById('customExNameWrap').style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+function saveWorkout() {
+  const type = document.getElementById('wkType').value;
+  const date = document.getElementById('wkDate').value;
+  if (!date) { alert('Date requise.'); return; }
+
+  const exercises = currentWorkoutExercises
+    .filter(e => e.weight || e.setsReps)
+    .map(e => ({name: e.name, weight: parseFloat(e.weight)||0, setsReps: e.setsReps, notes: e.notes}));
+
+  if (!exercises.length) { alert('Ajoute au moins un exercice.'); return; }
+
+  DATA.workouts.push({date, type, exercises});
+  DATA.workouts.sort((a,b) => a.date.localeCompare(b.date));
+  saveData(DATA);
+
+  currentWorkoutExercises = [];
+  renderWorkoutLog();
+  renderWorkoutHistory();
+  renderProgressExerciseList();
+
+  const btn = document.getElementById('wkType');
+  alert('Séance sauvegardée ✅');
+}
+
+function renderWorkoutHistory() {
+  const el = document.getElementById('workoutHistory');
+  const workouts = [...DATA.workouts].reverse().slice(0, 8);
+  if (!workouts.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-dim)">Aucune séance.</div>'; return; }
+
+  const tagClass = {push:'tag-push', pull:'tag-pull', legs:'tag-legs', upper:'tag-upper', fullbody:'tag-upper'};
+
+  el.innerHTML = workouts.map((w, idx) => {
+    const totalVol = w.exercises.reduce((sum, e) => {
+      const [sets, reps] = (e.setsReps||'').split('×').map(Number);
+      return sum + (e.weight * (sets||1) * (reps||1));
+    }, 0);
+
+    return `<div class="card" style="margin-bottom:8px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="split-tag ${tagClass[w.type]||'tag-rest'}">${w.type.toUpperCase()}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim)">${w.date}</span>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">${Math.round(totalVol)}kg vol</span>
+      </div>
+      ${w.exercises.map(e => {
+        const progress = getExerciseProgress(e.name, w.date);
+        return `<div class="exercise-row">
+          <div>
+            <div class="exercise-name">${e.name}</div>
+            <div class="exercise-meta">${e.weight}kg — ${e.setsReps||'—'}</div>
+          </div>
+          <div class="exercise-badge ${progress.class}">${progress.text}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function getExerciseProgress(name, currentDate) {
+  const history = DATA.workouts
+    .filter(w => w.date <= currentDate)
+    .flatMap(w => w.exercises.filter(e => e.name === name).map(e => ({...e, date: w.date})))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (history.length < 2) return {class: 'badge-new', text: 'NOUVEAU'};
+
+  const last = history[history.length - 1];
+  const prev = history[history.length - 2];
+
+  if (!prev.weight || !last.weight) return {class: 'badge-flat', text: '—'};
+
+  const pct = ((last.weight - prev.weight) / prev.weight * 100).toFixed(1);
+
+  if (pct > 0) return {class: 'badge-up', text: `+${pct}%`};
+  if (pct < 0) return {class: 'badge-down', text: `${pct}%`};
+  return {class: 'badge-flat', text: '=0%'};
+}
+
+// ==================== PROGRESS PAGE ====================
+function renderProgressExerciseList() {
+  const select = document.getElementById('progressExercise');
+  const allExercises = [...new Set(DATA.workouts.flatMap(w => w.exercises.map(e => e.name)))].sort();
+  const current = select.value;
+  select.innerHTML = '<option value="">— Choisir —</option>' +
+    allExercises.map(n => `<option value="${n}" ${n===current?'selected':''}>${n}</option>`).join('');
+  if (current) renderProgress();
+}
+
+function renderProgress() {
+  const name = document.getElementById('progressExercise').value;
+  const el = document.getElementById('progressContent');
+
+  if (!name) { el.innerHTML = ''; return; }
+
+  const history = DATA.workouts
+    .flatMap(w => w.exercises.filter(e => e.name === name).map(e => ({...e, date: w.date, wType: w.type})))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!history.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-dim)">Aucune donnée.</div>'; return; }
+
+  const first = history[0];
+  const last = history[history.length - 1];
+  const totalPct = first.weight ? ((last.weight - first.weight) / first.weight * 100).toFixed(1) : 0;
+  const maxWeight = Math.max(...history.map(h => h.weight));
+
+  // Plateau detection
+  const last3 = history.slice(-3);
+  const isPlateaued = last3.length === 3 && last3.every(h => h.weight === last3[0].weight);
+
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-value ${totalPct >= 0 ? 'green' : 'red'}">${totalPct >= 0 ? '+' : ''}${totalPct}%</div>
+        <div class="stat-label">PROGRESSION TOTALE</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">${maxWeight}kg</div>
+        <div class="stat-label">MAX ATTEINT</div>
+      </div>
+    </div>`;
+
+  if (isPlateaued) {
+    html += `<div class="alert alert-warn">⚡ PLATEAU DÉTECTÉ — 3 séances à ${last3[0].weight}kg. Recommandations : tente une surcharge progressive (+1.25kg), change le tempo (3 secondes négatif), ou fais un deload 1 séance.</div>`;
+  }
+
+  // Chart
+  html += `<div class="card"><div class="card-title">📈 PROGRESSION — ${name.toUpperCase()}</div>
+    <div class="chart-wrap"><canvas id="progressChart"></canvas></div></div>`;
+
+  // Table
+  html += `<div class="card"><div class="card-title">HISTORIQUE COMPLET</div>`;
+  html += [...history].reverse().map((h, i) => {
+    const prev = history[history.length - 2 - i];
+    const delta = prev ? ((h.weight - prev.weight) / prev.weight * 100).toFixed(1) : null;
+    return `<div class="exercise-row">
+      <div>
+        <div class="exercise-name">${h.weight}kg</div>
+        <div class="exercise-meta">${h.date} · ${h.setsReps||'—'}</div>
+      </div>
+      ${delta !== null ? `<div class="exercise-badge ${delta > 0 ? 'badge-up' : delta < 0 ? 'badge-down' : 'badge-flat'}">${delta > 0 ? '+' : ''}${delta}%</div>` : '<div class="exercise-badge badge-new">DÉPART</div>'}
+    </div>`;
+  }).join('');
+  html += '</div>';
+
+  el.innerHTML = html;
+
+  // Render chart
+  setTimeout(() => {
+    const ctx = document.getElementById('progressChart')?.getContext('2d');
+    if (!ctx) return;
+    if (progressChartInstance) progressChartInstance.destroy();
+    progressChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: history.map(h => h.date.slice(5)),
+        datasets: [{
+          data: history.map(h => h.weight),
+          borderColor: '#C9A84C',
+          backgroundColor: 'rgba(201,168,76,0.1)',
+          borderWidth: 2,
+          pointRadius: 5,
+          pointBackgroundColor: '#C9A84C',
+          fill: true,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#888880', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { ticks: { color: '#888880', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+      }
+    });
+  }, 50);
+}
+
+// ==================== AI UPDATE ====================
+async function sendUpdate() {
+  const gymTime = document.getElementById('upGymTime').value;
+  const sessionType = document.getElementById('upSessionType').value;
+  const water = document.getElementById('upWater').value;
+  const lastMeal = document.getElementById('upLastMeal').value;
+  const cheat = document.getElementById('upCheat').value;
+  const fatigue = document.getElementById('upFatigue').value;
+  const extra = document.getElementById('upExtra').value;
+
+  // Save locally
+  if (water) DATA.water = parseFloat(water);
+  if (lastMeal) DATA.lastMeal = lastMeal;
+  DATA.todaySession = {type: sessionType, time: gymTime};
+
+  if (cheat === 'combo' || cheat === 'kfc' || cheat === 'pizza') {
+    if (!DATA.saltFlushStart || DATA.saltFlushStart !== getTodayStr()) {
+      DATA.saltFlushStart = getTodayStr();
+      DATA.saltFlushDays = 3;
+    }
+  }
+
+  saveData(DATA);
+  renderWater();
+  updateZMA();
+  renderTodaySession();
+
+  // Build prompt
+  const now = new Date();
+  const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  const prompt = `Tu es APEX, coach ultra-strict et analytique. Voici mon update du ${getTodayStr()} à ${timeStr}.
+
+PROFIL :
+- Poids départ : 75.3kg | BF départ : 14% | Masse maigre départ : 64.8kg
+- Objectif : 73.5-74kg, 11-12% BF, +0.7kg masse maigre
+- Étudiant en study abroad à Londres jusqu'au 21 avril, courses chez Lidl Euston
+- PPL split, horaires variables (parfois 5h du mat), pas de balance alimentaire
+
+MON ARSENAL COMPLÉMENTS :
+- Matin/Jour : Omega-3 x2, Lion's Mane x2, Bacteria x1, B-Complex x1, Ashwagandha KSM-66 x1, Biotine x2, Électrolytes selon besoin
+- Autour salle : Glucosamine x1 avant, Whey 1 scoop après, Créatine 5g après, Collagène Marin x3 après
+- Nuit : ZMA x2 (EXACTEMENT 2h après dernier repas, jamais avec calcium), Bacteria x1
+
+SKINCARE : Glucoside Cleanser → HA sur peau humide → Salicylique SOIR zones problèmes → CeraVe
+
+RÈGLES :
+- 4.5L eau/jour, commence par 1.5L+citron le matin
+- Zéro sel ajouté, zéro pain (Salt Flush en cours)
+- ZMA = 2h après dernier repas strictement
+
+VARIABLES DU JOUR :
+- Heure salle : ${gymTime || 'Pas de salle'}
+- Type séance : ${sessionType}
+- Eau bue : ${water || '?'}L à ${timeStr}
+- Dernier repas : ${lastMeal || '?'}
+- Cheat meal : ${cheat}
+- Fatigue/sommeil : ${fatigue}
+- Infos sup : ${extra || 'RAS'}
+
+${cheat !== 'none' ? `PROTOCOLE SALT FLUSH 3J activé. Recalcule les macros du lendemain en conséquence.` : ''}
+${fatigue === 'bad' ? `Mauvaise nuit → booste recommandations Ashwagandha et B-Complex demain, adapte intensité séance.` : ''}
+
+FORMAT RÉPONSE (strict, pas d'intro) :
+1. DIAGNOSTIC FLASH (2-3 lignes max, direct)
+2. PLANNING CHRONOLOGIQUE (de maintenant jusqu'au coucher, heure par heure, chaque complément et skincare à la minute)
+3. PLAN DEMAIN si impact futur (macros, protocoles)`;
+
+  const responseEl = document.getElementById('updateResponse');
+  responseEl.innerHTML = `<div class="ai-bubble"><div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{role: 'user', content: prompt}]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Erreur de réponse.';
+
+    responseEl.innerHTML = `<div class="ai-bubble">${text}</div>`;
+
+    // Parse timeline from response and update Today tab
+    DATA.lastUpdate = {time: timeStr, text, date: getTodayStr()};
+    saveData(DATA);
+    renderTodayTimeline(text);
+
+  } catch(e) {
+    responseEl.innerHTML = `<div class="alert alert-danger">Erreur API. Vérifie ta connexion.</div>`;
+  }
+}
+
+function renderTodayTimeline(text) {
+  const el = document.getElementById('todayTimeline');
+  // Simple render of AI response in timeline format
+  const lines = text.split('\n').filter(l => l.trim());
+  el.innerHTML = `<div style="font-size:12px;line-height:1.8;color:var(--text-dim);white-space:pre-wrap;">${text}</div>`;
+}
+
+// ==================== TODAY PAGE ====================
+function renderTodayStats() {
+  if (DATA.bodyEntries.length) {
+    const latest = DATA.bodyEntries[DATA.bodyEntries.length - 1];
+    document.getElementById('todayWeight').textContent = latest.weight?.toFixed(1) || '—';
+    document.getElementById('todayBF').textContent = latest.bf ? latest.bf.toFixed(1)+'%' : '—';
+    renderBodyStats();
+  }
+}
+
+function renderTodaySession() {
+  const s = DATA.todaySession;
+  const tagClass = {push:'tag-push', pull:'tag-pull', legs:'tag-legs', upper:'tag-upper', fullbody:'tag-upper', rest:'tag-rest'};
+  const labels = {push:'PUSH', pull:'PULL', legs:'LEGS', upper:'UPPER BODY', fullbody:'FULL BODY', rest:'REPOS'};
+  document.getElementById('todaySession').className = `split-tag ${tagClass[s.type]||'tag-rest'}`;
+  document.getElementById('todaySession').textContent = labels[s.type]||'REPOS';
+  document.getElementById('todaySessionTime').textContent = s.time ? `— ${s.time}` : '';
+}
+
+function renderSaltFlush() {
+  const el = document.getElementById('saltFlushAlert');
+  if (!DATA.saltFlushStart || DATA.saltFlushDays <= 0) { el.innerHTML = ''; return; }
+
+  const start = new Date(DATA.saltFlushStart);
+  const now = new Date();
+  const daysPassed = Math.floor((now - start) / 86400000);
+  const remaining = DATA.saltFlushDays - daysPassed;
+
+  if (remaining > 0) {
+    el.innerHTML = `<div class="alert alert-warn">⚡ SALT FLUSH ACTIF — J${daysPassed+1}/3. Zéro sel, zéro pain, asperges si dispo, eau maximale.</div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+// ==================== UTILS ====================
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+
+  if (id === 'workout') { renderWorkoutLog(); renderWorkoutHistory(); }
+  if (id === 'progress') renderProgressExerciseList();
+  if (id === 'body') renderBodyPage();
+  if (id === 'supps') renderSupps();
+}
+
+// ==================== INIT ====================
+function init() {
+  // Date
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'short'}).toUpperCase();
+
+  // Set today's date in forms
+  const todayStr = getTodayStr();
+  document.getElementById('wkDate').value = todayStr;
+  document.getElementById('bodyDate').value = todayStr;
+
+  // Check water date reset
+  if (DATA.waterDate !== todayStr) { DATA.water = 0; DATA.waterDate = todayStr; saveData(DATA); }
+
+  renderWater();
+  renderTodayStats();
+  renderTodaySession();
+  renderSaltFlush();
+  updateZMA();
+  renderSupps();
+
+  if (DATA.lastUpdate && DATA.lastUpdate.date === todayStr) {
+    renderTodayTimeline(DATA.lastUpdate.text);
+  }
+
+  // Auto-refresh ZMA every minute
+  setInterval(updateZMA, 60000);
+  setInterval(renderWater, 300000);
+}
+
+init();
+</script>
+</body>
+</html>
