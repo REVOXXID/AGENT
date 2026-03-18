@@ -3,240 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>APEX | COMMAND CENTER</title>
+    <title>APEX OS | LEVEL 500</title>
     <style>
         :root {
-            --bg-dark: #0a0a0c; --bg-card: #16161a; --bg-input: #222229;
-            --accent: #00ffcc; --text-main: #ffffff; --text-sub: #8e8e93;
-            --danger: #ff453a; --success: #32d74b;
+            --bg: #050505; --panel: #111; --border: #222;
+            --cyan: #00ffcc; --cyan-glow: rgba(0,255,204,0.2);
+            --red: #ff2a2a; --yellow: #ffcc00; --text: #fff; --mut: #666;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); padding-bottom: 80px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, monospace; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 90px; }
         
-        header { padding: 15px 20px; background: rgba(10, 10, 12, 0.9); border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-        h1 { font-size: 20px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
-        .badge { background: rgba(255, 69, 58, 0.2); color: var(--danger); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid var(--danger); }
+        /* Header & Countdown */
+        header { background: #000; padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-size: 18px; color: var(--cyan); text-transform: uppercase; letter-spacing: 2px; }
+        .countdown { font-size: 10px; color: var(--yellow); border: 1px solid var(--yellow); padding: 3px 6px; border-radius: 4px; }
 
-        .container { padding: 15px; }
-        .card { background: var(--bg-card); border-radius: 14px; padding: 20px; margin-bottom: 15px; border: 1px solid #2a2a35; }
-        h2 { font-size: 14px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .container { padding: 10px; }
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 10px; position: relative; }
+        .card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: var(--cyan); }
+        .card.alert::before { background: var(--red); }
+        h2 { font-size: 12px; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
 
-        /* Progress Bar */
-        .progress-container { background: #000; border-radius: 10px; height: 20px; width: 100%; margin: 10px 0; overflow: hidden; border: 1px solid #333; }
-        .progress-bar { background: var(--accent); height: 100%; width: 0%; transition: width 0.3s ease; }
+        /* Grid & Inputs */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        input, select { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 10px; font-size: 13px; border-radius: 4px; outline: none; }
+        input:focus { border-color: var(--cyan); }
         
-        /* Checklists */
-        .check-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #222; }
-        .check-item:last-child { border-bottom: none; }
-        .check-item input[type="checkbox"] { width: 22px; height: 22px; margin-right: 15px; accent-color: var(--accent); }
-        .check-item label { font-size: 14px; flex-grow: 1; }
+        .btn { width: 100%; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 4px; margin-top: 5px; transition: 0.2s; }
+        .btn:active { background: var(--cyan); color: #000; }
+        .btn-danger { border-color: var(--red); color: var(--red); }
+        .btn-danger:active { background: var(--red); color: #000; }
 
-        /* Inputs */
-        input[type="text"], input[type="number"], select { width: 100%; background: var(--bg-input); border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
-        button { background: var(--accent); color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
-        button:active { opacity: 0.8; }
+        /* Visual Trackers */
+        .data-row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding: 8px 0; font-size: 12px; }
+        .water-bar { width: 100%; height: 8px; background: #000; margin-top: 5px; border-radius: 4px; overflow: hidden; }
+        .water-fill { height: 100%; background: var(--cyan); width: 0%; transition: width 0.3s; }
 
-        /* Terminal IA */
-        #ai-response { background: #000; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-top: 15px; font-size: 13px; line-height: 1.5; color: var(--accent); display: none; white-space: pre-wrap; }
-
-        /* Navigation */
-        nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); display: flex; border-top: 1px solid #333; z-index: 100; }
-        .nav-btn { flex: 1; padding: 15px 0; background: none; border: none; color: var(--text-sub); font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .nav-btn.active { color: var(--accent); border-top: 2px solid var(--accent); }
-        .tab { display: none; }
-        .tab.active { display: block; }
+        /* Skincare Zones */
+        .skin-zone { border-left: 2px solid var(--yellow); padding-left: 10px; margin-bottom: 10px; font-size: 11px; }
+        
+        /* Nav */
+        nav { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; border-top: 1px solid var(--border); z-index: 100; }
+        .nav-btn { flex: 1; padding: 15px 0; background: none; border: none; color: var(--mut); font-size: 10px; font-weight: bold; }
+        .nav-btn.active { color: var(--cyan); border-top: 2px solid var(--cyan); background: var(--cyan-glow); }
+        .tab { display: none; } .tab.active { display: block; }
+        
+        /* Terminal */
+        #terminal { background: #000; color: var(--cyan); font-family: monospace; font-size: 11px; padding: 15px; border: 1px solid var(--border); display: none; white-space: pre-wrap; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>APEX<span style="color:white">V4</span></h1>
-        <div class="badge">SALT FLUSH</div>
+    <header class="flex-between">
+        <h1>APEX<span style="color:#fff">OS</span></h1>
+        <div class="countdown" id="london-countdown">LDN: CALC...</div>
     </header>
 
     <div class="container">
         
-        <div id="tab-routine" class="tab active">
+        <div id="tab-bio" class="tab active">
             <div class="card">
-                <h2>Hydratation (Objectif: 4.5L)</h2>
-                <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                    <span id="water-text">0 L</span>
-                    <span>4.5 L</span>
+                <h2>Moteur Chrono-Biologique</h2>
+                <div class="grid-2">
+                    <div>
+                        <label style="font-size:10px;color:var(--mut);">Heure Levé</label>
+                        <input type="time" id="time-wake" onchange="calcChrono()">
+                    </div>
+                    <div>
+                        <label style="font-size:10px;color:var(--mut);">Heure Coucher</label>
+                        <input type="time" id="time-sleep" onchange="calcChrono()">
+                    </div>
                 </div>
-                <div class="progress-container">
-                    <div class="progress-bar" id="water-bar"></div>
+                <div id="chrono-alerts" style="font-size:11px; margin-top:10px; color:var(--yellow);"></div>
+            </div>
+
+            <div class="card">
+                <div class="flex-between">
+                    <h2>Hydratation (4.5L)</h2>
+                    <span id="water-txt" style="font-size:12px;color:var(--cyan);">0 L</span>
                 </div>
-                <button onclick="addWater()" style="padding: 10px; font-size: 12px; background: #333; color: white;">+ Ajouter 0.5L</button>
+                <div class="water-bar"><div class="water-fill" id="water-fill"></div></div>
+                <button class="btn" onclick="addWater()" style="padding:8px;font-size:10px;margin-top:10px;">+ 0.5L INJECTÉ</button>
             </div>
 
-            <div class="card">
-                <h2>1. Matin (Skincare & Supps)</h2>
-                <div class="check-item"><input type="checkbox" id="chk-skin-am" onchange="saveChecks()"><label>Skincare: Cleanser + HA + CeraVe</label></div>
-                <div class="check-item"><input type="checkbox" id="chk-supps-am" onchange="saveChecks()"><label>Stack: 2x Omega, 2x Lion, 1x Bact, 1x B-Comp, 1x Ashwa, 2x Biotine</label></div>
-                <div class="check-item"><input type="checkbox" id="chk-water-am" onchange="saveChecks()"><label>Eau + 1/2 Citron bu</label></div>
-            </div>
-
-            <div class="card">
-                <h2>2. Salle (Pré / Post)</h2>
-                <div class="check-item"><input type="checkbox" id="chk-pre" onchange="saveChecks()"><label>Pré: 1x Glucosamine + 1x Électrolyte</label></div>
-                <div class="check-item"><input type="checkbox" id="chk-post" onchange="saveChecks()"><label>Post: Whey + Creatine + 3x Collagène</label></div>
-            </div>
-
-            <div class="card">
-                <h2>3. Nuit (Skincare & ZMA)</h2>
-                <div class="check-item"><input type="checkbox" id="chk-skin-pm" onchange="saveChecks()"><label>Skincare: Salicylic + HA + CeraVe</label></div>
-                <div class="check-item"><input type="checkbox" id="chk-zma" onchange="saveChecks()"><label>2x ZMA (2h après dîner)</label></div>
-            </div>
-            
-            <button onclick="resetRoutine()" style="background: var(--danger); color: white;">Réinitialiser la journée</button>
-        </div>
-
-        <div id="tab-stats" class="tab">
-            <div class="card">
-                <h2>Évolution BF% (Cible: 11%)</h2>
-                <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">14.0%</div>
-                <svg viewBox="0 0 100 30" style="width: 100%; height: 60px; background: #000; border-radius: 8px; padding: 5px;">
-                    <polyline points="0,5 25,12 50,18 75,25 100,28" fill="none" stroke="var(--accent)" stroke-width="2"/>
-                </svg>
-            </div>
-            
-            <div class="card">
-                <h2>Calculateur 1RM (Densité)</h2>
-                <input type="number" id="lift-weight" placeholder="Poids soulevé (kg)">
-                <input type="number" id="lift-reps" placeholder="Répétitions max">
-                <button onclick="calc1RM()">Calculer 1RM</button>
-                <div id="rm-result" style="margin-top: 15px; font-size: 18px; font-weight: bold; color: var(--accent); text-align: center;"></div>
+            <div class="card alert">
+                <h2 style="color:var(--red);">Skincare : Contrôle Sébum (Zone T)</h2>
+                <div class="skin-zone">
+                    <strong style="color:#fff;">Haut du front / Ligne de cheveux :</strong><br>
+                    Application locale Acide Salicylique (Soir) pour détruire le gras.
+                </div>
+                <div class="skin-zone" style="border-color:var(--cyan);">
+                    <strong style="color:#fff;">Reste du visage :</strong><br>
+                    Acide Hyaluronique sur peau <u style="color:var(--cyan);">humide</u> obligatoire + CeraVe.
+                </div>
+                <button class="btn" onclick="logSkincare('AM')" style="font-size:10px;padding:8px;margin-bottom:5px;">Check Matin OK</button>
+                <button class="btn" onclick="logSkincare('PM')" style="font-size:10px;padding:8px;">Check Soir OK</button>
             </div>
         </div>
 
-        <div id="tab-coach" class="tab">
+        <div id="tab-gym" class="tab">
             <div class="card">
-                <h2>Update au Coach</h2>
-                <input type="text" id="food-input" placeholder="Qu'as-tu mangé ? (Ex: Poulet, Asperges...)">
-                <input type="text" id="gym-input" placeholder="Heure de la salle ? (Ex: 22h30)">
-                <select id="cheat-input">
-                    <option value="clean">Journée 100% Clean</option>
-                    <option value="cheat">J'ai fait un écart (Sel/Cheat meal)</option>
+                <h2>Cycle Flottant (Auto-Ajustable)</h2>
+                <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Si tu rates un jour, le cycle s'adapte.</div>
+                <div class="flex-between" style="background:#000;padding:10px;border:1px solid var(--border);">
+                    <span style="font-size:10px;">PROCHAINE SÉANCE :</span>
+                    <strong id="next-workout" style="color:var(--cyan);font-size:14px;">PUSH</strong>
+                </div>
+                <button class="btn" onclick="cycleWorkout()" style="margin-top:10px;">Valider Séance & Passer à la suivante</button>
+            </div>
+
+            <div class="card">
+                <h2>Core Lifts (Densité Absolue)</h2>
+                <select id="lift-type" style="margin-bottom:10px;">
+                    <option value="bench">Développé Couché (Push/Upper)</option>
+                    <option value="row">Tirage Buste Penché / Tractions (Pull/Upper)</option>
+                    <option value="legpress">Presse à Cuisses / Bulgare (Legs/Lower)</option>
                 </select>
-                <button onclick="callIA()" id="btn-ia">Demander Stratégie</button>
-                <div id="ai-response"></div>
+                <div class="grid-2">
+                    <input type="number" id="lift-w" placeholder="Poids (kg)">
+                    <input type="number" id="lift-r" placeholder="Reps">
+                </div>
+                <button class="btn" onclick="calcTonnage()">Calculer Tonnage Global</button>
+                <div id="tonnage-res" style="font-size:14px;color:var(--cyan);margin-top:10px;text-align:center;"></div>
+            </div>
+        </div>
+
+        <div id="tab-ia" class="tab">
+            <div class="card">
+                <h2>Visual Macros (Sans Balance)</h2>
+                <div class="grid-2">
+                    <select id="food-prot"><option value="0">Protéines ?</option><option value="1">1 Paume</option><option value="2">2 Paumes (Optimal)</option></select>
+                    <select id="food-carb"><option value="0">Glucides ?</option><option value="0.5">0 (Salt Flush)</option><option value="1">1 Poing</option><option value="2">2 Poings (Cheat)</option></select>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Liaison IA Hybride</h2>
+                <input type="text" id="ia-context" placeholder="Update (ex: Fatigué, mangé pizza, salle à 2h...)">
+                <button class="btn" onclick="runIA()" id="btn-ia">INITIER ANALYSE BIO-CHIMIQUE</button>
+                <div id="terminal"></div>
             </div>
         </div>
 
     </div>
 
     <nav>
-        <button class="nav-btn active" onclick="switchTab('routine', this)">ROUTINE</button>
-        <button class="nav-btn" onclick="switchTab('stats', this)">STATS</button>
-        <button class="nav-btn" onclick="switchTab('coach', this)">COACH IA</button>
+        <button class="nav-btn active" onclick="switchTab('bio', this)">CHRONO/BIO</button>
+        <button class="nav-btn" onclick="switchTab('gym', this)">WORKOUT</button>
+        <button class="nav-btn" onclick="switchTab('ia', this)">IA CORE</button>
     </nav>
 
     <script>
-        // --- GESTION DES ONGLETS ---
+        // --- BASE DATA ---
+        let db = JSON.parse(localStorage.getItem('apexV5')) || { water: 0, workoutIdx: 0 };
+        const cycle = ["PUSH (Pecs/Triceps)", "PULL (Dos/Biceps)", "LEGS (Cuisses/Mollets)", "UPPER (Haut)", "LOWER (Bas)"];
+
+        function init() {
+            // London Countdown
+            const end = new Date('2026-04-21T00:00:00Z').getTime();
+            const now = new Date().getTime();
+            const days = Math.floor((end - now) / (1000 * 60 * 60 * 24));
+            document.getElementById('london-countdown').innerText = `LDN DEPART: -${days}J`;
+
+            // Setup UI
+            document.getElementById('next-workout').innerText = cycle[db.workoutIdx];
+            updateWater();
+        }
+
+        // --- TABS ---
         function switchTab(id, btn) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + id).classList.add('active');
+            document.getElementById('tab-'+id).classList.add('active');
             btn.classList.add('active');
         }
 
-        // --- GESTION DE L'EAU & CHECKLISTS (LOCALSTORAGE) ---
-        let water = parseFloat(localStorage.getItem('apexWater')) || 0;
-        
-        function updateWaterUI() {
-            document.getElementById('water-text').innerText = water.toFixed(1) + " L";
-            let percent = Math.min((water / 4.5) * 100, 100);
-            document.getElementById('water-bar').style.width = percent + "%";
+        // --- CHRONO LOGIC ---
+        function calcChrono() {
+            let wake = document.getElementById('time-wake').value;
+            let sleep = document.getElementById('time-sleep').value;
+            if(!wake || !sleep) return;
+
+            let sHours = parseInt(sleep.split(':')[0]);
+            let sMins = sleep.split(':')[1];
+            
+            // ZMA Limit (1h avant le coucher, 2h après repas)
+            let zmaH = sHours - 1; if(zmaH < 0) zmaH += 24;
+            // B-Complex Limit (Ne pas prendre 6h avant sommeil)
+            let bCompH = sHours - 6; if(bCompH < 0) bCompH += 24;
+
+            document.getElementById('chrono-alerts').innerHTML = `
+                > DEADLINE B-Complex : ${bCompH}:00 (Sinon insomnie)<br>
+                > ALARME ZMA : ${zmaH}:${sMins} (Estomac vide)<br>
+                > CUT-OFF EAU : ${zmaH}:${sMins} (Pour ne pas uriner la nuit)
+            `;
         }
-        
+
+        // --- WATER ---
         function addWater() {
-            water += 0.5;
-            localStorage.setItem('apexWater', water);
-            updateWaterUI();
+            db.water += 0.5;
+            localStorage.setItem('apexV5', JSON.stringify(db));
+            updateWater();
+        }
+        function updateWater() {
+            document.getElementById('water-txt').innerText = db.water.toFixed(1) + " L";
+            document.getElementById('water-fill').style.width = Math.min((db.water/4.5)*100, 100) + '%';
         }
 
-        function saveChecks() {
-            const checks = ['chk-skin-am', 'chk-supps-am', 'chk-water-am', 'chk-pre', 'chk-post', 'chk-skin-pm', 'chk-zma'];
-            checks.forEach(id => {
-                localStorage.setItem(id, document.getElementById(id).checked);
-            });
+        // --- WORKOUT CYCLE ---
+        function cycleWorkout() {
+            db.workoutIdx = (db.workoutIdx + 1) % cycle.length;
+            localStorage.setItem('apexV5', JSON.stringify(db));
+            document.getElementById('next-workout').innerText = cycle[db.workoutIdx];
         }
 
-        function loadChecks() {
-            const checks = ['chk-skin-am', 'chk-supps-am', 'chk-water-am', 'chk-pre', 'chk-post', 'chk-skin-pm', 'chk-zma'];
-            checks.forEach(id => {
-                document.getElementById(id).checked = (localStorage.getItem(id) === 'true');
-            });
-            updateWaterUI();
-        }
-
-        function resetRoutine() {
-            if(confirm("Effacer la routine d'aujourd'hui ?")) {
-                water = 0; localStorage.setItem('apexWater', 0);
-                const checks = ['chk-skin-am', 'chk-supps-am', 'chk-water-am', 'chk-pre', 'chk-post', 'chk-skin-pm', 'chk-zma'];
-                checks.forEach(id => { document.getElementById(id).checked = false; localStorage.setItem(id, false); });
-                updateWaterUI();
+        function calcTonnage() {
+            let w = parseFloat(document.getElementById('lift-w').value);
+            let r = parseFloat(document.getElementById('lift-r').value);
+            if(w>0 && r>0) {
+                document.getElementById('tonnage-res').innerText = `Tonnage Série : ${w*r} KG 🚀`;
             }
         }
 
-        // --- CALCULATEUR 1RM ---
-        function calc1RM() {
-            let w = parseFloat(document.getElementById('lift-weight').value);
-            let r = parseFloat(document.getElementById('lift-reps').value);
-            if(w > 0 && r > 0) {
-                let res = w * (1 + (r / 30));
-                document.getElementById('rm-result').innerText = "1RM: " + res.toFixed(1) + " kg";
-            }
-        }
+        function logSkincare(phase) { alert(`Protocole ${phase} validé. Sébum sous contrôle.`); }
 
-        // --- COACH IA (FIX DU 404) ---
-        async function callIA() {
+        // --- IA HYBRID ENGINE ---
+        async function runIA() {
             const btn = document.getElementById('btn-ia');
-            const resp = document.getElementById('ai-response');
+            const term = document.getElementById('terminal');
+            const ctx = document.getElementById('ia-context').value || "Aucun update précis.";
             
-            const food = document.getElementById('food-input').value || "Rien spécifié";
-            const gym = document.getElementById('gym-input').value || "Non spécifiée";
-            const cheat = document.getElementById('cheat-input').value;
-            
-            btn.innerText = "Analyse en cours...";
-            resp.style.display = "block";
-            resp.innerText = "> Connexion API en cours...";
+            btn.innerText = "CONNEXION SATELLITE...";
+            term.style.display = "block"; term.innerText = "> Analyse Biochimique en cours...";
 
             const apiKey = "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA"; 
-            // FIX MAJEUR: Utilisation de gemini-1.5-flash qui est le modèle public stable
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-            const prompt = `Tu es APEX, coach strict. 
-            DONNÉES DU USER:
-            - Eau bue: ${water}L (Cible: 4.5L)
-            - Repas: ${food}
-            - Salle: ${gym}
-            - État: ${cheat === 'cheat' ? 'A fait un écart (Salt Flush requis)' : 'Clean'}
-            
-            Fais un bilan court et dis-lui ce qu'il doit faire pour le reste de la journée (Suppléments, ZMA timing, Eau). Sois direct et militaire.`;
+            const prompt = `Tu es APEX OS, une IA hybride (Moitié Sergent Instructeur brutal, Moitié Biochimiste expert). 
+            Cible: Peau sur l'os (11% BF). Variables actuelles: Eau: ${db.water}L.
+            Update du soldat: "${ctx}".
+            Règles: 
+            1. Si le soldat rate la salle ou mange mal, détruis-le verbalement (Sergent) puis explique scientifiquement (Biochimiste) comment le pic d'insuline ou le sel va ruiner ses abdos.
+            2. Dicte le plan d'urgence (Suppléments à prendre, eau à boire).
+            3. Reste concis, format terminal de commande.`;
 
             try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error.message || "Erreur API inconnue");
-                }
-
-                const data = await response.json();
-                resp.innerText = data.candidates[0].content.parts[0].text;
-            } catch (e) {
-                resp.innerText = `> ÉCHEC DE LA CONNEXION.\nRaison : ${e.message}\n\nVérifie que ta clé API est valide pour gemini-1.5-flash.`;
-            }
-            btn.innerText = "Demander Stratégie";
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                const data = await res.json();
+                term.innerText = data.candidates[0].content.parts[0].text;
+            } catch(e) { term.innerText = "> ERREUR SYSTÈME. API OFFLINE."; }
+            
+            btn.innerText = "INITIER ANALYSE BIO-CHIMIQUE";
         }
 
-        // Initialisation
-        window.onload = loadChecks;
+        window.onload = init;
     </script>
 </body>
 </html>
