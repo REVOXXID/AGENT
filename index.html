@@ -1,1132 +1,1306 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="manifest.json">
-    <title>APEX OS | KERNEL V7.2</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<title>APEX OS</title>
+<style>
+/* ══════════════════════════════════════════
+   APEX OS V7.3 — PREMIUM DARK GLASS SYSTEM
+   ══════════════════════════════════════════ */
+:root {
+  --bg: #000;
+  --c1: #0a0a0f;
+  --c2: #111118;
+  --c3: #1a1a24;
+  --border: rgba(255,255,255,0.07);
+  --border-accent: rgba(0,255,204,0.25);
+  --accent: #00ffcc;
+  --accent2: #00d4aa;
+  --glow: rgba(0,255,204,0.15);
+  --glow-strong: rgba(0,255,204,0.35);
+  --red: #ff3b30;
+  --red-dim: rgba(255,59,48,0.12);
+  --orange: #ff9f0a;
+  --blue: #0a84ff;
+  --purple: #bf5af2;
+  --gold: #ffd60a;
+  --text: #fff;
+  --dim: rgba(255,255,255,0.45);
+  --dim2: rgba(255,255,255,0.22);
+  --safe-t: env(safe-area-inset-top, 44px);
+  --safe-b: env(safe-area-inset-bottom, 34px);
+}
 
-    <!-- DEPS CDN — Zero framework, total < 80KB -->
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/svg-gauge@1.1.0/dist/gauge.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mitjafelicijan/sparklines@master/sparklines.js"></script>
+*,*::before,*::after {
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  outline:none; margin:0; padding:0;
+}
 
-    <style>
-        :root {
-            --bg: #000; --card: #0c0c0e; --panel: #141417; --border: #242429;
-            --accent: #00ffcc; --accent-dim: rgba(0,255,204,0.12); --accent-glow: rgba(0,255,204,0.25);
-            --red: #ff3b30; --red-dim: rgba(255,59,48,0.12);
-            --orange: #ff9500; --blue: #0a84ff; --gold: #ffd60a;
-            --text: #fff; --text-dim: #8e8e93; --text-dark: #3a3a3c;
-            --safe-top: env(safe-area-inset-top, 0px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-        }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100dvh;
+  width: 100vw;
+  position: fixed;
+  top: 0; left: 0;
+}
 
-        /* === RESET === */
-        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
-        body {
-            background: var(--bg); color: var(--text);
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            padding-top: calc(var(--safe-top) + 15px);
-            padding-bottom: calc(110px + var(--safe-bottom));
-            overflow-x: hidden;
-            -webkit-user-select: none; user-select: none;
-        }
-        input, textarea, select { -webkit-user-select: auto; user-select: auto; }
+input,textarea,select { -webkit-user-select:auto; user-select:auto; }
 
-        /* === LAYOUT === */
-        .c { padding: 0 18px; max-width: 600px; margin: 0 auto; width: 100%; }
-        .tab { display: none; }
-        .tab.active { display: block; animation: fadeUp .35s cubic-bezier(.4,0,.2,1); }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+/* BG AMBIENT */
+body::before {
+  content:'';
+  position:fixed; top:-50%; left:-50%;
+  width:200%; height:200%;
+  background: 
+    radial-gradient(ellipse 60% 50% at 80% 10%, rgba(0,255,204,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 20% 90%, rgba(10,132,255,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(0,0,0,0) 0%, #000 70%);
+  pointer-events:none; z-index:0;
+}
 
-        /* === CARDS === */
-        .card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 22px; padding: 20px; margin-bottom: 16px;
-            position: relative; overflow: hidden;
-        }
-        .card::before {
-            content:''; position:absolute; top:0; left:0; right:0; height:3px;
-            background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
-        }
-        .card.alert::before { background: linear-gradient(90deg, var(--red) 0%, transparent 70%); }
+/* ── SCROLL CONTAINER ── */
+#app {
+  position:relative; z-index:1;
+  height:100dvh;
+  padding-top: calc(var(--safe-t) + 8px);
+  padding-bottom: calc(80px + var(--safe-b));
+  overflow:hidden;
+}
 
-        /* === TYPOGRAPHY === */
-        .eyebrow {
-            font-size: 10px; font-weight: 700; color: var(--text-dim);
-            text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px;
-        }
-        .big-num { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; }
-        .unit { font-size: 14px; font-weight: 500; color: var(--text-dim); }
+/* ── TABS SWIPE SYSTEM ── */
+.tabs-wrap {
+  width:100%; height:100%;
+  display:flex;
+  transition: transform 0.42s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
+}
+.tab {
+  min-width:100%;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding: 0 16px 20px;
+}
+.tab::-webkit-scrollbar { display:none; }
 
-        /* === READINESS HEADER === */
-        .hero { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px 0; margin-bottom: 18px; }
-        .hero-left { display: flex; flex-direction: column; gap: 4px; }
-        .hero-clock { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
-        .hero-date { font-size: 11px; color: var(--text-dim); }
-        .hero-deadline {
-            display: inline-flex; align-items: center; gap: 5px;
-            background: var(--red-dim); border: 1px solid var(--red);
-            border-radius: 20px; padding: 4px 10px; margin-top: 6px;
-            font-size: 10px; font-weight: 800; color: var(--red); text-transform: uppercase; letter-spacing: 1px;
-        }
+/* ── GLASS CARDS ── */
+.g {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.g::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, var(--accent) 0%, rgba(0,255,204,0.1) 40%, transparent 70%);
+}
+.g.red-top::before { background: linear-gradient(90deg, var(--red) 0%, transparent 60%); }
+.g.orange-top::before { background: linear-gradient(90deg, var(--orange) 0%, transparent 60%); }
+.g:active { transform: scale(0.985); }
 
-        /* GAUGE WHOOP ENGINE */
-        .gauge-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
-        #readiness-gauge .gauge-container { width: 130px !important; height: 130px !important; }
-        #readiness-gauge svg { width: 130px; height: 130px; }
-        .gauge-center-label {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; pointer-events: none;
-        }
-        .gauge-score { font-size: 30px; font-weight: 900; line-height: 1; }
-        .gauge-sub { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+/* Inner glow shimmer */
+.g::after {
+  content:'';
+  position:absolute; top:0; left:-100%; width:60%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.025), transparent);
+  pointer-events:none;
+  animation: shimmer 8s ease-in-out infinite;
+}
+@keyframes shimmer { 0%,100%{left:-100%} 50%{left:140%} }
 
-        /* === KPI GRID === */
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-        .kpi {
-            background: var(--panel); border: 1px solid var(--border);
-            border-radius: 18px; padding: 16px 14px; transition: transform .15s, background .15s;
-            cursor: pointer; position: relative; overflow: hidden;
-        }
-        .kpi:active { transform: scale(0.96); background: #1a1a1e; }
-        .kpi-val { font-size: 22px; font-weight: 800; display: flex; align-items: baseline; gap: 3px; }
-        .kpi-val .u { font-size: 11px; color: var(--text-dim); font-weight: 500; }
-        .kpi-lab { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
-        .kpi.tap-hint::after {
-            content: '+ TAP'; position: absolute; top: 8px; right: 10px;
-            font-size: 8px; color: var(--text-dark); font-weight: 700;
-        }
-        .kpi-spark { margin-top: 8px; }
+/* ── EYEBROW ── */
+.ey {
+  font-size: 10px; font-weight: 700;
+  color: var(--dim); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ey::before {
+  content:'';
+  width:3px; height:10px; border-radius:2px;
+  background: var(--accent); flex-shrink:0;
+}
 
-        /* === PROGRESS BAR === */
-        .pbar-wrap { margin: 8px 0 4px; }
-        .pbar-bg { background: #1c1c1e; border-radius: 20px; height: 5px; overflow: hidden; }
-        .pbar-fill { height: 100%; border-radius: 20px; background: var(--accent); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
-        .pbar-fill.red { background: var(--red); }
-        .pbar-fill.orange { background: var(--orange); }
+/* ── HERO HEADER ── */
+.hero {
+  display:flex; justify-content:space-between;
+  align-items:flex-start;
+  padding: 8px 0 16px;
+}
+.hero-l { flex:1; }
+.clock {
+  font-size: 38px; font-weight: 900;
+  letter-spacing: -2px; line-height: 1;
+  background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub { font-size: 11px; color: var(--dim); margin-top:4px; }
+.deadline-pill {
+  display:inline-flex; align-items:center; gap:5px;
+  background: var(--red-dim);
+  border: 1px solid rgba(255,59,48,0.35);
+  border-radius:30px; padding:5px 12px; margin-top:8px;
+  font-size:10px; font-weight:800; color:var(--red);
+  text-transform:uppercase; letter-spacing:1px;
+  animation: pulse-red 2s ease-in-out infinite;
+}
+@keyframes pulse-red {
+  0%,100%{ box-shadow:0 0 0 0 rgba(255,59,48,0.3); }
+  50%{ box-shadow:0 0 0 6px rgba(255,59,48,0); }
+}
 
-        /* === TIMELINE === */
-        .timeline-scroll {
-            display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 12px;
-            scrollbar-width: none; -ms-overflow-style: none;
-        }
-        .timeline-scroll::-webkit-scrollbar { display: none; }
-        .t-item {
-            min-width: 130px; background: var(--panel); border: 1px solid var(--border);
-            border-radius: 16px; padding: 14px 12px; flex-shrink: 0; transition: border-color .2s;
-        }
-        .t-item.now { border-color: var(--accent); background: var(--accent-dim); }
-        .t-item.past { opacity: 0.4; }
-        .t-item.urgent { border-color: var(--orange); }
-        .t-time { font-size: 10px; color: var(--accent); font-weight: 800; margin-bottom: 5px; letter-spacing: .5px; }
-        .t-item.urgent .t-time { color: var(--orange); }
-        .t-title { font-size: 13px; font-weight: 700; }
-        .t-desc { font-size: 10px; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+/* ── READINESS GAUGE ── */
+.gauge-wrap {
+  width:120px; height:120px;
+  position:relative; flex-shrink:0;
+}
+.gauge-wrap svg {
+  width:100%; height:100%;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 0 12px var(--glow));
+}
+.gauge-track { fill:none; stroke:rgba(255,255,255,0.06); stroke-width:9; }
+.gauge-bg2 { fill:none; stroke:rgba(0,255,204,0.05); stroke-width:9; }
+.gauge-fill {
+  fill:none; stroke:var(--accent); stroke-width:9;
+  stroke-linecap:round;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1),
+              stroke 0.8s ease;
+}
+.gauge-label {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center; pointer-events:none;
+}
+.gauge-num {
+  font-size:28px; font-weight:900; line-height:1;
+  letter-spacing:-1px;
+  transition: color 0.8s ease;
+}
+.gauge-sub2 {
+  font-size:8px; color:var(--dim);
+  text-transform:uppercase; letter-spacing:1.5px;
+  margin-top:2px;
+}
 
-        /* === CHECKLIST === */
-        .check-pill {
-            display: flex; align-items: center; background: var(--panel);
-            border: 1px solid var(--border); border-radius: 16px;
-            padding: 15px 16px; margin-bottom: 9px; transition: opacity .2s, border-color .2s;
-            cursor: pointer; gap: 14px;
-        }
-        .check-pill.done { opacity: 0.45; border-color: #1c1c1e; }
-        .check-pill input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); flex-shrink: 0; }
-        .check-pill label { font-size: 13px; font-weight: 600; line-height: 1.3; cursor: pointer; }
-        .check-pill .badge {
-            margin-left: auto; font-size: 9px; font-weight: 800; text-transform: uppercase;
-            padding: 3px 7px; border-radius: 8px; letter-spacing: .5px;
-        }
-        .badge-crit { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,59,48,.3); }
-        .badge-ok { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,255,204,.3); }
+/* ── KPI GRID ── */
+.kgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.kpi {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--border);
+  border-radius:18px; padding:16px 14px;
+  position:relative; overflow:hidden;
+  transition: transform 0.12s, background 0.12s;
+  cursor:pointer;
+}
+.kpi:active { transform:scale(0.94); background:rgba(255,255,255,0.06); }
+.kpi::after {
+  content:''; position:absolute;
+  bottom:0; left:0; right:0; height:2px;
+  border-radius:0 0 18px 18px;
+  background:linear-gradient(90deg, var(--accent), transparent);
+  opacity:0.5;
+}
+.kpi.red-kpi::after { background:linear-gradient(90deg, var(--red), transparent); }
+.kpi.orange-kpi::after { background:linear-gradient(90deg, var(--orange), transparent); }
+.k-val {
+  font-size:20px; font-weight:800;
+  display:flex; align-items:baseline; gap:3px;
+}
+.k-u { font-size:10px; color:var(--dim); font-weight:500; }
+.k-lab { font-size:9px; color:var(--dim2); text-transform:uppercase; letter-spacing:.8px; margin-top:3px; }
 
-        /* === SKIN MAP === */
-        .skin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .skin-zone {
-            background: var(--panel); border: 1px solid var(--border);
-            border-radius: 14px; padding: 12px 8px; text-align: center;
-            font-size: 11px; font-weight: 700; cursor: pointer; transition: all .2s;
-        }
-        .skin-zone.active { border-color: var(--red); background: var(--red-dim); color: var(--red); }
-        .skin-zone .zone-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+/* Progress micro-bar */
+.µbar { height:3px; border-radius:4px; background:rgba(255,255,255,0.08); margin-top:10px; overflow:hidden; }
+.µfill { height:100%; border-radius:4px; background:var(--accent); transition:width 0.8s cubic-bezier(0.4,0,0.2,1); }
+.µfill.r { background:var(--red); }
+.µfill.o { background:var(--orange); }
 
-        /* === GYM === */
-        .apex-input {
-            width: 100%; background: #000; border: 1px solid var(--border);
-            border-radius: 14px; padding: 15px 16px; color: var(--text);
-            font-size: 16px; font-family: inherit; margin-bottom: 10px;
-            transition: border-color .2s, box-shadow .2s;
-            -webkit-appearance: none; appearance: none;
-        }
-        .apex-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-        .apex-input option { background: #1a1a1a; }
-        textarea.apex-input { resize: vertical; min-height: 100px; }
+/* Sparkline */
+.spark { margin-top:8px; }
+.spark svg { width:100%; height:22px; }
 
-        .btn {
-            width: 100%; padding: 18px; border: none; border-radius: 16px;
-            font-size: 14px; font-weight: 900; text-transform: uppercase;
-            letter-spacing: 2px; cursor: pointer; transition: transform .15s, opacity .15s;
-        }
-        .btn:active { transform: translateY(2px); opacity: .8; }
-        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 8px 24px var(--accent-dim); }
-        .btn-ghost { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
-        .btn-red { background: var(--red); color: #fff; }
+/* ── TIMELINE ── */
+.tl-scroll {
+  display:flex; gap:10px; overflow-x:auto;
+  padding:2px 2px 12px; scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.tl-scroll::-webkit-scrollbar { display:none; }
+.tl {
+  min-width:120px; flex-shrink:0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius:16px; padding:14px 12px;
+  transition: all 0.3s;
+}
+.tl.now {
+  border-color: var(--accent);
+  background: rgba(0,255,204,0.07);
+  box-shadow: 0 0 20px rgba(0,255,204,0.12);
+}
+.tl.past { opacity:0.28; }
+.tl.warn { border-color:var(--orange); }
+.tl-time { font-size:10px; font-weight:800; color:var(--accent); margin-bottom:5px; letter-spacing:.5px; }
+.tl.warn .tl-time { color:var(--orange); }
+.tl-title { font-size:12px; font-weight:700; }
+.tl-desc { font-size:10px; color:var(--dim2); margin-top:3px; line-height:1.4; }
 
-        /* Lift history list */
-        .lift-history { margin-top: 12px; }
-        .lift-entry {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px; background: var(--panel); border-radius: 12px;
-            margin-bottom: 8px; font-size: 13px;
-        }
-        .lift-entry .lift-name { font-weight: 700; }
-        .lift-entry .lift-meta { color: var(--text-dim); font-size: 11px; }
-        .lift-entry .lift-orm { font-weight: 800; color: var(--accent); }
+/* ── CHECKS ── */
+.cp {
+  display:flex; align-items:center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius:16px; padding:14px 15px;
+  margin-bottom:8px; gap:13px;
+  cursor:pointer;
+  transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+  -webkit-user-select:none; user-select:none;
+}
+.cp.done { opacity:0.35; }
+.cp.done .cb-box { background:var(--accent); border-color:var(--accent); }
+.cp.done .cb-box::after { opacity:1; }
+.cb-box {
+  width:22px; height:22px; border-radius:7px;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink:0; position:relative;
+  transition: all 0.2s;
+}
+.cb-box::after {
+  content:'✓'; position:absolute;
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  color:#000; font-size:12px; font-weight:900;
+  opacity:0; transition:opacity 0.15s;
+}
+.cp-label { font-size:13px; font-weight:600; line-height:1.3; flex:1; }
+.cp-badge {
+  font-size:9px; font-weight:800;
+  padding:3px 7px; border-radius:8px;
+  text-transform:uppercase; letter-spacing:.5px;
+  white-space:nowrap;
+}
+.b-red { background:var(--red-dim); color:var(--red); border:1px solid rgba(255,59,48,.25); }
+.b-green { background:rgba(0,255,204,.1); color:var(--accent); border:1px solid rgba(0,255,204,.2); }
 
-        /* Progression bar lifts */
-        .overload-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 11px; font-weight: 800; padding: 4px 10px;
-            border-radius: 20px; margin-top: 8px;
-        }
-        .overload-badge.up { background: var(--accent-dim); color: var(--accent); }
-        .overload-badge.warn { background: rgba(255,149,0,.12); color: var(--orange); }
+/* ── SKIN ZONES ── */
+.skin-g { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.sz {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius:14px; padding:12px 6px;
+  text-align:center; cursor:pointer;
+  transition: all 0.2s;
+  font-size:11px; font-weight:700;
+  -webkit-user-select:none;
+}
+.sz .zi { font-size:18px; display:block; margin-bottom:4px; }
+.sz.on { border-color:var(--red); background:var(--red-dim); color:var(--red); }
+.sz:active { transform:scale(0.92); }
 
-        /* === TERMINAL AI === */
-        .terminal-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .terminal-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .dot-red { background: #ff5f57; }
-        .dot-yellow { background: #ffbd2e; }
-        .dot-green { background: #28ca41; }
+/* ── INPUTS ── */
+.inp {
+  width:100%; background:rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius:14px; padding:14px 16px;
+  color:var(--text); font-size:16px; font-family:inherit;
+  margin-bottom:10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance:none; appearance:none;
+}
+.inp:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(0,255,204,0.12);
+}
+.inp option { background:#111; }
+textarea.inp { resize:none; min-height:90px; }
 
-        #ai-terminal {
-            background: #020202; border: 1px solid #1c1c1e; border-radius: 18px;
-            padding: 20px; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
-            font-size: 12px; line-height: 1.7; color: #00ff88;
-            min-height: 80px; display: none; margin-top: 14px;
-            white-space: pre-wrap; word-break: break-word;
-        }
-        .agent-tag {
-            display: inline-block; font-size: 9px; font-weight: 900;
-            text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
-            margin-right: 8px; letter-spacing: 1px;
-        }
-        .tag-analyst { background: #0a0a2a; color: var(--blue); border: 1px solid rgba(10,132,255,.3); }
-        .tag-sergeant { background: #2a0808; color: var(--red); border: 1px solid rgba(255,59,48,.3); }
-        .tag-bio { background: #0a2a0a; color: #30d158; border: 1px solid rgba(48,209,88,.3); }
-        .tag-nutri { background: #2a1a00; color: var(--gold); border: 1px solid rgba(255,214,10,.3); }
-        .tag-recovery { background: #1a0a2a; color: #bf5af2; border: 1px solid rgba(191,90,242,.3); }
-        .cmd-line { color: var(--text-dim); font-size: 11px; }
+/* ── BUTTONS ── */
+.btn {
+  width:100%; padding:18px; border:none;
+  border-radius:16px; font-size:14px;
+  font-weight:900; text-transform:uppercase;
+  letter-spacing:2px; cursor:pointer;
+  transition: transform 0.12s, opacity 0.12s, box-shadow 0.2s;
+  font-family:inherit;
+  position:relative; overflow:hidden;
+}
+.btn:active { transform:translateY(3px) scale(0.98); opacity:.85; }
+.btn-a {
+  background: linear-gradient(135deg, var(--accent), #00c9a0);
+  color:#000;
+  box-shadow: 0 8px 24px rgba(0,255,204,0.25), 0 2px 4px rgba(0,0,0,0.3);
+}
+.btn-a:hover { box-shadow: 0 12px 32px rgba(0,255,204,0.35); }
+.btn-g {
+  background: rgba(255,255,255,0.06);
+  color:var(--text);
+  border: 1px solid var(--border);
+}
+.btn-r { background:var(--red); color:#fff; }
 
-        /* Energy selector */
-        .energy-pills { display: flex; gap: 8px; margin-bottom: 12px; }
-        .e-pill {
-            flex: 1; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--border);
-            background: var(--panel); font-size: 11px; font-weight: 800; text-align: center;
-            cursor: pointer; transition: all .2s;
-        }
-        .e-pill.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-        .e-pill.e-low.selected { border-color: var(--red); background: var(--red-dim); color: var(--red); }
-        .e-pill.e-mid.selected { border-color: var(--orange); background: rgba(255,149,0,.12); color: var(--orange); }
+/* Ripple */
+.btn::after {
+  content:''; position:absolute;
+  width:0; height:0; border-radius:50%;
+  background:rgba(255,255,255,0.3);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  transition: width 0s, height 0s, opacity 0s;
+}
+.btn:active::after { width:300px; height:300px; opacity:0; transition:width 0.4s, height 0.4s, opacity 0.8s; }
 
-        /* === NUTRITION TAB === */
-        .macro-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-        .macro-row .m-name { font-size: 12px; font-weight: 700; }
-        .macro-row .m-val { font-size: 12px; color: var(--text-dim); }
+/* ── LIFT HISTORY ── */
+.lh-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:11px 14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:14px; margin-bottom:8px;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.lh-name { font-size:13px; font-weight:700; }
+.lh-meta { font-size:10px; color:var(--dim); margin-top:2px; }
+.lh-orm { font-size:16px; font-weight:900; color:var(--accent); text-align:right; }
+.lh-orm small { display:block; font-size:8px; color:var(--dim2); font-weight:500; }
 
-        /* === NAV === */
-        nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,.92); backdrop-filter: blur(30px) saturate(180%);
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
-            border-top: 1px solid var(--border);
-            display: flex; z-index: 1000;
-            padding: 12px 0 calc(14px + var(--safe-bottom));
-        }
-        .nav-btn {
-            flex: 1; background: none; border: none;
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
-            color: var(--text-dark); transition: color .2s; cursor: pointer; padding: 4px 0;
-        }
-        .nav-btn.active { color: var(--accent); }
-        .nav-icon { font-size: 22px; line-height: 1; }
-        .nav-lab { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+/* Overload badge */
+.olbadge {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:800;
+  padding:5px 12px; border-radius:20px; margin-top:8px;
+}
+.olbadge.up { background:rgba(0,255,204,.1); color:var(--accent); border:1px solid rgba(0,255,204,.2); }
+.olbadge.warn { background:rgba(255,149,0,.1); color:var(--orange); border:1px solid rgba(255,149,0,.2); }
 
-        /* === UTILS === */
-        .sep { height: 1px; background: var(--border); margin: 18px 0; }
-        .text-accent { color: var(--accent); }
-        .text-red { color: var(--red); }
-        .text-dim { color: var(--text-dim); }
-        .mt8 { margin-top: 8px; }
-        .mt16 { margin-top: 16px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    </style>
+/* ── REST TIMER ── */
+#rest-display {
+  text-align:center; font-size:52px; font-weight:900;
+  color:var(--accent); display:none; margin-top:12px;
+  letter-spacing:-2px;
+  text-shadow: 0 0 30px var(--glow);
+  transition: color 0.5s;
+}
+#rest-display.warn { color:var(--orange); text-shadow:0 0 30px rgba(255,149,0,.3); }
+#rest-display.go { color:var(--accent); animation:pulse-go .5s ease 3; }
+@keyframes pulse-go { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+/* ── ENERGY PILLS ── */
+.epills { display:flex; gap:8px; margin-bottom:12px; }
+.ep {
+  flex:1; padding:10px 4px;
+  border-radius:12px; border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+  font-size:11px; font-weight:800;
+  text-align:center; cursor:pointer;
+  transition:all 0.2s;
+}
+.ep.sel { border-color:var(--accent); background:rgba(0,255,204,0.1); color:var(--accent); }
+.ep.sel.low { border-color:var(--red); background:var(--red-dim); color:var(--red); }
+.ep.sel.mid { border-color:var(--orange); background:rgba(255,149,0,.1); color:var(--orange); }
+
+/* ── TERMINAL ── */
+.term-header {
+  display:flex; align-items:center; gap:7px;
+  margin-bottom:10px; padding-left:4px;
+}
+.tdot { width:10px; height:10px; border-radius:50%; }
+.tdot.r { background:#ff5f57; }
+.tdot.y { background:#ffbd2e; }
+.tdot.g { background:#28ca41; }
+.term-info { font-size:10px; color:var(--dim2); margin-left:4px; }
+
+#terminal {
+  background: #020208;
+  border: 1px solid rgba(0,255,204,0.15);
+  border-radius:18px; padding:20px;
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-size:12px; line-height:1.75; color:#00dd99;
+  min-height:80px; display:none; margin-top:12px;
+  white-space:pre-wrap; word-break:break-word;
+  max-height:60vh; overflow-y:auto;
+  box-shadow: inset 0 0 40px rgba(0,255,204,0.03);
+}
+.at {
+  display:inline-block; font-size:9px; font-weight:900;
+  padding:2px 7px; border-radius:5px;
+  margin-right:6px; letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.at.an { background:#0a0a2a; color:var(--blue); border:1px solid rgba(10,132,255,.25); }
+.at.sg { background:#2a0808; color:var(--red); border:1px solid rgba(255,59,48,.25); }
+.at.bi { background:#082a12; color:#30d158; border:1px solid rgba(48,209,88,.25); }
+.at.nu { background:#2a1800; color:var(--gold); border:1px solid rgba(255,214,10,.25); }
+.at.rc { background:#1a0828; color:var(--purple); border:1px solid rgba(191,90,242,.25); }
+.cmd { color:rgba(0,255,204,0.35); font-size:11px; }
+
+/* ── NAV ── */
+nav {
+  position:fixed; bottom:0; left:0; width:100%;
+  background:rgba(0,0,0,0.88);
+  backdrop-filter:blur(30px) saturate(200%);
+  -webkit-backdrop-filter:blur(30px) saturate(200%);
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; z-index:1000;
+  padding: 10px 0 calc(10px + var(--safe-b));
+}
+.nb {
+  flex:1; background:none; border:none;
+  display:flex; flex-direction:column;
+  align-items:center; gap:4px;
+  color:rgba(255,255,255,0.25);
+  transition:color 0.2s; cursor:pointer;
+  padding:4px 0; font-family:inherit;
+}
+.nb.on { color:var(--accent); }
+.ni { font-size:20px; line-height:1; transition:transform 0.2s; }
+.nb.on .ni { transform:scale(1.1); }
+.nl { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.8px; }
+
+/* ── MACRO ROWS ── */
+.mr {
+  display:flex; justify-content:space-between;
+  align-items:center; margin-bottom:5px;
+  font-size:12px;
+}
+.mr .mn { font-weight:700; }
+.mr .mv { color:var(--dim); font-size:11px; }
+
+/* ── FLUSH CARD ── */
+#flush-card { display:none; }
+
+/* ── UTILS ── */
+.sep { height:1px; background:var(--border); margin:16px 0; }
+.mt12 { margin-top:12px; }
+.mt16 { margin-top:16px; }
+.flex-between { display:flex; justify-content:space-between; align-items:center; }
+.ta-c { text-align:center; }
+.text-a { color:var(--accent); }
+.text-r { color:var(--red); }
+.text-d { color:var(--dim); }
+.fw9 { font-weight:900; }
+.fs28 { font-size:28px; }
+.fs11 { font-size:11px; }
+.btn-row { display:flex; gap:8px; }
+.btn-row .btn { flex:1; }
+</style>
 </head>
 <body>
+<div id="app">
+  <!-- ── SWIPE TABS WRAPPER ── -->
+  <div class="tabs-wrap" id="tabs">
 
-<!-- ═══════════════════════════════════════ -->
-<!--  TAB 1: OVERVIEW / CORE               -->
-<!-- ═══════════════════════════════════════ -->
-<div id="tab-core" class="tab active">
-    <!-- Hero Header -->
-    <div class="hero c">
-        <div class="hero-left">
-            <div class="hero-clock" id="clock">--:--</div>
-            <div class="hero-date" id="hero-date">London, GMT</div>
-            <div class="hero-deadline">🎯 <span id="countdown">-- J</span> London Exit</div>
+    <!-- ═══════════ TAB 0: CORE ═══════════ -->
+    <div class="tab" id="t0">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-l">
+          <div class="clock" id="clk">--:--</div>
+          <div class="hero-sub" id="hdate">London, GMT</div>
+          <div class="deadline-pill">🎯 <span id="cdwn">-- J</span> London Exit</div>
         </div>
         <div class="gauge-wrap">
-            <div id="readiness-gauge"></div>
-            <div class="gauge-center-label">
-                <div class="gauge-score" id="readiness-score">--</div>
-                <div class="gauge-sub">Readiness</div>
-            </div>
+          <svg viewBox="0 0 100 100">
+            <circle class="gauge-track" cx="50" cy="50" r="45"/>
+            <circle class="gauge-bg2" cx="50" cy="50" r="45" stroke-dasharray="14 269"/>
+            <circle class="gauge-fill" id="gfill" cx="50" cy="50" r="45"/>
+          </svg>
+          <div class="gauge-label">
+            <div class="gauge-num" id="gscore">--</div>
+            <div class="gauge-sub2">Readiness</div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <div class="c">
-        <!-- KPI Grid -->
-        <div class="kpi-grid">
-            <!-- Water -->
-            <div class="kpi tap-hint" onclick="addWater()" id="kpi-water">
-                <div class="kpi-val"><span id="water-val">0.0</span><span class="u">/ 4.5L</span></div>
-                <div class="kpi-lab">Hydratation</div>
-                <div class="pbar-wrap">
-                    <div class="pbar-bg"><div class="pbar-fill" id="water-bar" style="width:0%"></div></div>
-                </div>
-                <div class="kpi-spark" id="water-spark"></div>
-            </div>
-
-            <!-- Metabolic State -->
-            <div class="kpi" id="kpi-metabolic" onclick="switchTab('tab-ai')">
-                <div class="kpi-val" id="metabolic-val">CLEAN</div>
-                <div class="kpi-lab">Metabolic State</div>
-                <div class="pbar-wrap mt8">
-                    <div class="pbar-bg"><div class="pbar-fill" id="metabolic-bar" style="width:100%"></div></div>
-                </div>
-            </div>
-
-            <!-- BF Progress -->
-            <div class="kpi" id="kpi-bf">
-                <div class="kpi-val"><span id="bf-val">14.0</span><span class="u">% BF</span></div>
-                <div class="kpi-lab">Cible: 11–12%</div>
-                <div class="pbar-wrap">
-                    <div class="pbar-bg"><div class="pbar-fill orange" id="bf-bar" style="width:67%"></div></div>
-                </div>
-            </div>
-
-            <!-- Session Tonnage -->
-            <div class="kpi" onclick="switchTab('tab-gym')">
-                <div class="kpi-val"><span id="tonnage-val">0</span><span class="u">kg</span></div>
-                <div class="kpi-lab">Session Volume</div>
-                <div class="kpi-spark mt8" id="tonnage-spark"></div>
-            </div>
+      <!-- KPI Grid -->
+      <div class="kgrid">
+        <div class="kpi" onclick="addWater()" id="wkpi">
+          <div class="k-val"><span id="wval">0,0</span><span class="k-u">&nbsp;/ 4.5L</span></div>
+          <div class="k-lab">Hydratation · Tap +0.25L</div>
+          <div class="µbar"><div class="µfill" id="wbar" style="width:0%"></div></div>
+          <div class="spark" id="wspk"></div>
         </div>
-
-        <!-- Timeline Bio-Sync Dynamique -->
-        <div class="eyebrow">Timeline Bio-Sync</div>
-        <div class="timeline-scroll" id="timeline-list"></div>
-
-        <!-- Daily Operations Checklist -->
-        <div class="eyebrow mt16">Daily Ops</div>
-
-        <div class="check-pill" id="cp-wake" onclick="toggleCheck('cp-wake')">
-            <input type="checkbox" id="cb-wake">
-            <label for="cb-wake">Réveil Bio-Sync — Eau chaude + Citron</label>
-            <span class="badge badge-crit">-10</span>
+        <div class="kpi" id="mkpi">
+          <div class="k-val" id="mval" style="color:var(--accent)">CLEAN</div>
+          <div class="k-lab">Metabolic State</div>
+          <div class="µbar"><div class="µfill" id="mbar" style="width:100%"></div></div>
         </div>
-        <div class="check-pill" id="cp-supps" onclick="toggleCheck('cp-supps')">
-            <input type="checkbox" id="cb-supps">
-            <label for="cb-supps">Stack AM — B-Complex + Lion's Mane + Ashwagandha</label>
-            <span class="badge badge-crit">-10</span>
+        <div class="kpi orange-kpi">
+          <div class="k-val"><span id="bfval">14,0</span><span class="k-u">&nbsp;% BF</span></div>
+          <div class="k-lab">Cible 11–12%</div>
+          <div class="µbar"><div class="µfill o" id="bfbar" style="width:33%"></div></div>
         </div>
-        <div class="check-pill" id="cp-creatine" onclick="toggleCheck('cp-creatine')">
-            <input type="checkbox" id="cb-creatine">
-            <label for="cb-creatine">Créatine 5g (maintien masse maigre en sèche)</label>
-            <span class="badge badge-ok">+5</span>
+        <div class="kpi" onclick="goTab(1)">
+          <div class="k-val"><span id="tvol">0</span><span class="k-u">&nbsp;kg</span></div>
+          <div class="k-lab">Volume Session</div>
+          <div class="spark" id="tspk"></div>
         </div>
-        <div class="check-pill" id="cp-skin" onclick="toggleCheck('cp-skin')">
-            <input type="checkbox" id="cb-skin">
-            <label for="cb-skin">Skincare AM — CeraVe + Salicylic Zone T</label>
-            <span class="badge badge-crit">-10</span>
-        </div>
-        <div class="check-pill" id="cp-training" onclick="toggleCheck('cp-training')">
-            <input type="checkbox" id="cb-training">
-            <label for="cb-training">Séance PPL — Progressive Overload Log</label>
-            <span class="badge badge-crit">-15</span>
-        </div>
-        <div class="check-pill" id="cp-zma" onclick="toggleCheck('cp-zma')">
-            <input type="checkbox" id="cb-zma">
-            <label for="cb-zma">ZMA + Salicylic PM (1:00 Sleep Protocol)</label>
-            <span class="badge badge-ok">+5</span>
-        </div>
+      </div>
 
-        <!-- Skin Zone Map -->
-        <div class="eyebrow mt16">Skin Monitoring — Zone T</div>
-        <div class="card alert">
-            <p class="text-dim" style="font-size:12px; margin-bottom:14px;">Active les zones problématiques du jour (impact Readiness -5 par zone)</p>
-            <div class="skin-grid">
-                <div class="skin-zone" id="sz-front" onclick="toggleSkinZone('sz-front')">
-                    <span class="zone-icon">😓</span>Front
-                </div>
-                <div class="skin-zone" id="sz-nose" onclick="toggleSkinZone('sz-nose')">
-                    <span class="zone-icon">👃</span>Nez
-                </div>
-                <div class="skin-zone" id="sz-chin" onclick="toggleSkinZone('sz-chin')">
-                    <span class="zone-icon">🫧</span>Menton
-                </div>
-                <div class="skin-zone" id="sz-temple" onclick="toggleSkinZone('sz-temple')">
-                    <span class="zone-icon">💢</span>Tempes
-                </div>
-                <div class="skin-zone" id="sz-cheek" onclick="toggleSkinZone('sz-cheek')">
-                    <span class="zone-icon">🔴</span>Joues
-                </div>
-                <div class="skin-zone" id="sz-back" onclick="toggleSkinZone('sz-back')">
-                    <span class="zone-icon">⬛</span>Dos
-                </div>
-            </div>
+      <!-- Timeline -->
+      <div class="ey" style="margin-top:4px;">Timeline Bio-Sync</div>
+      <div class="tl-scroll" id="tlist"></div>
+
+      <!-- Checks -->
+      <div class="ey mt16">Daily Ops</div>
+      <div class="cp" id="cp0" onclick="ck(0)">
+        <div class="cb-box" id="cb0"></div>
+        <div class="cp-label">Réveil — Eau chaude + Citron</div>
+        <div class="cp-badge b-red">-10</div>
+      </div>
+      <div class="cp" id="cp1" onclick="ck(1)">
+        <div class="cb-box" id="cb1"></div>
+        <div class="cp-label">Stack AM — B-Comp + Lion's + Ashwa</div>
+        <div class="cp-badge b-red">-10</div>
+      </div>
+      <div class="cp" id="cp2" onclick="ck(2)">
+        <div class="cb-box" id="cb2"></div>
+        <div class="cp-label">Créatine 5g (LBM preservation)</div>
+        <div class="cp-badge b-green">+5</div>
+      </div>
+      <div class="cp" id="cp3" onclick="ck(3)">
+        <div class="cb-box" id="cb3"></div>
+        <div class="cp-label">Skincare AM — CeraVe + Salicylic Zone T</div>
+        <div class="cp-badge b-red">-10</div>
+      </div>
+      <div class="cp" id="cp4" onclick="ck(4)">
+        <div class="cb-box" id="cb4"></div>
+        <div class="cp-label">Séance PPL — Progressive Overload Log</div>
+        <div class="cp-badge b-red">-15</div>
+      </div>
+      <div class="cp" id="cp5" onclick="ck(5)">
+        <div class="cb-box" id="cb5"></div>
+        <div class="cp-label">ZMA + Salicylic PM (Sleep Protocol)</div>
+        <div class="cp-badge b-green">+5</div>
+      </div>
+
+      <!-- Skin Zones -->
+      <div class="ey mt16">Skin Monitor — Zone T Sébum</div>
+      <div class="g red-top">
+        <div style="font-size:11px;color:var(--dim);margin-bottom:12px;">Zones actives aujourd'hui (-5 Readiness / zone)</div>
+        <div class="skin-g">
+          <div class="sz" id="sz0" onclick="szk(0)"><span class="zi">😓</span>Front</div>
+          <div class="sz" id="sz1" onclick="szk(1)"><span class="zi">👃</span>Nez</div>
+          <div class="sz" id="sz2" onclick="szk(2)"><span class="zi">🫧</span>Menton</div>
+          <div class="sz" id="sz3" onclick="szk(3)"><span class="zi">💢</span>Tempes</div>
+          <div class="sz" id="sz4" onclick="szk(4)"><span class="zi">🔴</span>Joues</div>
+          <div class="sz" id="sz5" onclick="szk(5)"><span class="zi">⬛</span>Dos</div>
         </div>
-    </div>
-</div>
+      </div>
+    </div><!-- /t0 -->
 
-<!-- ═══════════════════════════════════════ -->
-<!--  TAB 2: GYM / TRAINING                -->
-<!-- ═══════════════════════════════════════ -->
-<div id="tab-gym" class="tab">
-    <div class="c">
-        <div class="card mt16">
-            <div class="eyebrow" style="margin-bottom:16px;">Surcharge Progressive — PPL Cycle</div>
-
-            <select id="lift-id" class="apex-input">
-                <option value="bench">🏋️ Incline Bench Press (Push)</option>
-                <option value="row">🔄 Barbell Row (Pull)</option>
-                <option value="legpress">🦵 Leg Press (Legs)</option>
-                <option value="bulgarian">🎯 Bulgarian Split Squat</option>
-                <option value="ohp">💪 OHP (Push)</option>
-                <option value="deadlift">⚡ Romanian Deadlift</option>
-            </select>
-
-            <div class="kpi-grid" style="margin-bottom:12px;">
-                <input type="number" id="lift-w" class="apex-input" placeholder="Poids (kg)" inputmode="decimal" step="0.5">
-                <input type="number" id="lift-r" class="apex-input" placeholder="Reps" inputmode="numeric">
-            </div>
-            <input type="number" id="lift-sets" class="apex-input" placeholder="Séries (ex: 4)" inputmode="numeric">
-            <button class="btn btn-primary" onclick="logLift()">⚡ Enregistrer Performance</button>
+    <!-- ═══════════ TAB 1: GYM ═══════════ -->
+    <div class="tab" id="t1">
+      <div class="mt16"></div>
+      <div class="g">
+        <div class="ey">Surcharge Progressive — PPL Cycle</div>
+        <select id="lid" class="inp">
+          <option value="bench">🏋️ Incline Bench Press (Push)</option>
+          <option value="row">🔄 Barbell Row (Pull)</option>
+          <option value="legpress">🦵 Leg Press (Legs)</option>
+          <option value="bulgarian">🎯 Bulgarian Split Squat</option>
+          <option value="ohp">💪 OHP (Push)</option>
+          <option value="rdl">⚡ Romanian Deadlift</option>
+        </select>
+        <div class="kgrid" style="margin-bottom:10px;">
+          <input type="number" id="lw" class="inp" placeholder="Poids (kg)" inputmode="decimal" step="0.5" style="margin:0">
+          <input type="number" id="lr" class="inp" placeholder="Reps" inputmode="numeric" style="margin:0">
         </div>
+        <input type="number" id="ls" class="inp" placeholder="Séries (défaut: 4)" inputmode="numeric">
+        <button class="btn btn-a" onclick="logLift()">⚡ Log Performance</button>
+      </div>
 
-        <!-- 1RM + Tonnage Display -->
-        <div class="card">
-            <div class="flex-between">
-                <div>
-                    <div class="eyebrow">1RM Estimé (Epley)</div>
-                    <div class="big-num text-accent" id="orm-display">--</div>
-                    <div class="text-dim" style="font-size:11px; margin-top:4px;">w × (1 + reps/30)</div>
-                </div>
-                <div style="text-align:right;">
-                    <div class="eyebrow">Volume Session</div>
-                    <div class="big-num" id="session-vol">0</div>
-                    <div class="text-dim" style="font-size:11px;">kg total</div>
-                </div>
-            </div>
-            <div id="overload-status" class="mt8"></div>
+      <div class="g">
+        <div class="flex-between">
+          <div>
+            <div class="ey">1RM Estimé · Epley</div>
+            <div class="fs28 fw9 text-a" id="orm">-- kg</div>
+            <div class="fs11 text-d" style="margin-top:3px;">w × (1 + reps / 30)</div>
+          </div>
+          <div class="ta-c">
+            <div class="ey">Volume Session</div>
+            <div class="fs28 fw9" id="svol">0 kg</div>
+          </div>
         </div>
+        <div id="olbadge" class="mt12"></div>
+      </div>
 
-        <!-- Lift History -->
-        <div class="eyebrow">Historique Session</div>
-        <div id="lift-history" class="lift-history"></div>
+      <div class="ey">Historique Session</div>
+      <div id="lhist"></div>
 
-        <!-- Rest Timer -->
-        <div class="card">
-            <div class="eyebrow">Repos Timer</div>
-            <div class="flex-between" style="gap:8px;">
-                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(60)">60s</button>
-                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(90)">90s</button>
-                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(120)">120s</button>
-            </div>
-            <div id="rest-timer" style="text-align:center; font-size:40px; font-weight:900; color:var(--accent); margin-top:12px; display:none;"></div>
+      <div class="g">
+        <div class="ey">Timer de Repos</div>
+        <div class="btn-row">
+          <button class="btn btn-g" style="font-size:12px;padding:12px;" onclick="rst(60)">60s</button>
+          <button class="btn btn-g" style="font-size:12px;padding:12px;" onclick="rst(90)">90s</button>
+          <button class="btn btn-g" style="font-size:12px;padding:12px;" onclick="rst(120)">120s</button>
+          <button class="btn btn-g" style="font-size:12px;padding:12px;" onclick="rst(0)">Stop</button>
         </div>
-    </div>
-</div>
+        <div id="rest-display">--</div>
+      </div>
+    </div><!-- /t1 -->
 
-<!-- ═══════════════════════════════════════ -->
-<!--  TAB 3: NUTRITION                     -->
-<!-- ═══════════════════════════════════════ -->
-<div id="tab-nutrition" class="tab">
-    <div class="c">
-        <!-- Déficit Calorique Calculé -->
-        <div class="card mt16">
-            <div class="eyebrow">Protocole Sèche — Mattéo</div>
-            <div class="flex-between">
-                <div>
-                    <div style="font-size:11px; color:var(--text-dim);">TDEE estimé</div>
-                    <div style="font-size:22px; font-weight:800;">~2 423<span class="unit"> kcal</span></div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:11px; color:var(--text-dim);">Cible sèche</div>
-                    <div style="font-size:22px; font-weight:800; color:var(--accent);">~1 923<span class="unit"> kcal</span></div>
-                </div>
-            </div>
-            <div class="sep"></div>
-            <!-- Macros Targets -->
-            <div class="eyebrow">Macros Cibles (LBM-based)</div>
-            <div class="macro-row">
-                <span class="m-name">🥩 Protéines</span>
-                <span class="m-val">~162g (2.5g/kg LBM)</span>
-            </div>
-            <div class="pbar-bg" style="margin-bottom:10px;"><div class="pbar-fill" id="prot-bar" style="width:0%"></div></div>
-            <div class="macro-row">
-                <span class="m-name">🍚 Glucides</span>
-                <span class="m-val">~160g (training days)</span>
-            </div>
-            <div class="pbar-bg" style="margin-bottom:10px;"><div class="pbar-fill orange" id="carb-bar" style="width:0%"></div></div>
-            <div class="macro-row">
-                <span class="m-name">🥑 Lipides</span>
-                <span class="m-val">~60g (hormonaux)</span>
-            </div>
-            <div class="pbar-bg"><div class="pbar-fill" id="fat-bar" style="width:0%"></div></div>
+    <!-- ═══════════ TAB 2: NUTRITION ═══════════ -->
+    <div class="tab" id="t2">
+      <div class="mt16"></div>
+      <div class="g">
+        <div class="ey">Protocole Sèche — Mattéo · 75.3kg → 11% BF</div>
+        <div class="flex-between">
+          <div>
+            <div class="text-d fs11">TDEE estimé</div>
+            <div class="fs28 fw9">2 423 <span class="k-u">kcal</span></div>
+          </div>
+          <div style="text-align:right">
+            <div class="text-d fs11">Cible déficit -500</div>
+            <div class="fs28 fw9 text-a">1 923 <span class="k-u">kcal</span></div>
+          </div>
         </div>
+        <div class="sep"></div>
+        <div class="ey">Macros · LBM 64.8kg</div>
+        <div class="mr"><span class="mn">🥩 Protéines</span><span class="mv" id="prot-val">0 / 162g</span></div>
+        <div class="µbar" style="margin-bottom:10px;height:5px;border-radius:6px;"><div class="µfill" id="pbar" style="width:0%"></div></div>
+        <div class="mr"><span class="mn">🍚 Glucides</span><span class="mv">~160g (training day)</span></div>
+        <div class="µbar" style="margin-bottom:10px;height:5px;border-radius:6px;"><div class="µfill o" style="width:0%" id="cbar"></div></div>
+        <div class="mr"><span class="mn">🥑 Lipides</span><span class="mv">~60g (hormonaux)</span></div>
+        <div class="µbar" style="height:5px;border-radius:6px;"><div class="µfill" style="background:var(--purple);width:0%" id="fbar"></div></div>
+      </div>
 
-        <!-- Log Repas Rapide -->
-        <div class="card">
-            <div class="eyebrow">Log Repas</div>
-            <select id="meal-type" class="apex-input">
-                <option value="clean">✅ Clean Meal</option>
-                <option value="cheat">🚨 Cheat Meal (Sodium Load)</option>
-                <option value="fast">⏱️ Jeûne Intermittent</option>
-                <option value="protein">💊 Shake Protéiné</option>
-            </select>
-            <input type="number" id="meal-prot" class="apex-input" placeholder="Protéines (g)" inputmode="numeric">
-            <input type="number" id="meal-sodium" class="apex-input" placeholder="Sodium estimé (mg)" inputmode="numeric">
-            <button class="btn btn-primary" onclick="logMeal()">Enregistrer Repas</button>
+      <div class="g">
+        <div class="ey">Log Repas Rapide</div>
+        <select id="mtype" class="inp" onchange="mealTypeChange()">
+          <option value="clean">✅ Clean Meal</option>
+          <option value="cheat">🚨 Cheat Meal (Sodium Load)</option>
+          <option value="fast">⏱️ Jeûne Intermittent</option>
+          <option value="shake">💊 Shake Protéiné</option>
+        </select>
+        <div class="kgrid" style="margin-bottom:10px;">
+          <input type="number" id="mprot" class="inp" placeholder="Protéines (g)" inputmode="numeric" style="margin:0">
+          <input type="number" id="msod" class="inp" placeholder="Sodium (mg)" inputmode="numeric" style="margin:0">
+        </div>
+        <button class="btn btn-a" onclick="logMeal()">Enregistrer</button>
+      </div>
+
+      <!-- Salt Flush Protocol -->
+      <div class="g red-top" id="flush-card">
+        <div class="ey" style="color:var(--red)">🚨 Salt Flush Protocol Actif</div>
+        <div class="cp" id="fp0" onclick="ck('fp0')"><div class="cb-box" id="cbfp0"></div><div class="cp-label">+1.5L eau supplémentaire</div></div>
+        <div class="cp" id="fp1" onclick="ck('fp1')"><div class="cb-box" id="cbfp1"></div><div class="cp-label">Thé Pissenlit (diurétique naturel)</div></div>
+        <div class="cp" id="fp2" onclick="ck('fp2')"><div class="cb-box" id="cbfp2"></div><div class="cp-label">Banane / KCl (balance électrolytes)</div></div>
+      </div>
+
+      <!-- IF Window -->
+      <div class="g">
+        <div class="ey">Fenêtre Jeûne Intermittent</div>
+        <div class="flex-between">
+          <div>
+            <div class="text-d fs11">Début jeûne</div>
+            <input type="time" id="ifstart" class="inp" value="22:00" style="width:auto;padding:8px 12px;font-size:16px;margin-top:6px;" oninput="calcIF()">
+          </div>
+          <div style="text-align:right">
+            <div class="text-d fs11">Rupture (12h)</div>
+            <div class="fs28 fw9 text-a mt12" id="ifbreak">10:00</div>
+          </div>
+          <div style="text-align:right">
+            <div class="text-d fs11">En cours</div>
+            <div class="fs28 fw9 mt12" id="ifdur">--h</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t2 -->
+
+    <!-- ═══════════ TAB 3: AI ═══════════ -->
+    <div class="tab" id="t3">
+      <div class="mt16"></div>
+      <div class="g">
+        <div class="ey">Bio-Update — Analyse Multi-Agent</div>
+        <textarea id="aiinput" class="inp" placeholder="Update du jour : sommeil, fatigue, douleurs, écarts, stress..."></textarea>
+
+        <div class="text-d" style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Niveau d'énergie</div>
+        <div class="epills">
+          <div class="ep low" id="ep0" onclick="setEn(1)">🔴<br>Bas</div>
+          <div class="ep mid" id="ep1" onclick="setEn(5)">🟠<br>Moyen</div>
+          <div class="ep sel" id="ep2" onclick="setEn(10)">🟢<br>Haut</div>
         </div>
 
-        <!-- Salt Flush Protocol -->
-        <div class="card" id="flush-card" style="display:none;">
-            <div class="eyebrow text-red">🚨 Salt Flush Protocol Actif</div>
-            <p style="font-size:13px; line-height:1.6; color:var(--text-dim);">Sodium détecté. Protocole actif :</p>
-            <div class="mt8">
-                <div class="check-pill" id="fp-water" onclick="toggleCheck('fp-water')">
-                    <input type="checkbox" id="cb-fp-water">
-                    <label>+1.5L eau supplémentaire</label>
-                </div>
-                <div class="check-pill" id="fp-dandelion" onclick="toggleCheck('fp-dandelion')">
-                    <input type="checkbox" id="cb-fp-dandelion">
-                    <label>Thé Pissenlit (diurétique naturel)</label>
-                </div>
-                <div class="check-pill" id="fp-potassium" onclick="toggleCheck('fp-potassium')">
-                    <input type="checkbox" id="cb-fp-potassium">
-                    <label>Banane / KCl (équilibre électrolytes)</label>
-                </div>
-            </div>
+        <div class="flex-between" style="margin-bottom:14px;">
+          <span style="font-size:13px;font-weight:700;">Écart sodium / sucre ?</span>
+          <div class="btn-row" style="width:auto;gap:8px;">
+            <button class="btn btn-g" id="cno" style="width:auto;padding:9px 16px;font-size:12px;" onclick="setCheat(false)">❌ Non</button>
+            <button class="btn" id="cyes" style="width:auto;padding:9px 16px;font-size:12px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);" onclick="setCheat(true)">🔥 Oui</button>
+          </div>
         </div>
 
-        <!-- Fenêtre IF -->
-        <div class="card">
-            <div class="eyebrow">Jeûne Intermittent</div>
-            <div class="flex-between">
-                <div>
-                    <div style="font-size:11px; color:var(--text-dim);">Début jeûne</div>
-                    <input type="time" id="fast-start" class="apex-input" style="width:auto; padding:8px 12px; font-size:14px;" value="22:00">
-                </div>
-                <div>
-                    <div style="font-size:11px; color:var(--text-dim);">Rupture cible</div>
-                    <div id="fast-break" style="font-size:22px; font-weight:800; color:var(--accent); padding-top:8px;">10:00</div>
-                </div>
-                <div>
-                    <div style="font-size:11px; color:var(--text-dim);">Durée</div>
-                    <div id="fast-duration" style="font-size:22px; font-weight:800; padding-top:8px;">12h</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        <button class="btn btn-a" onclick="runAI()">🧠 Lancer Conseil Expert</button>
+      </div>
 
-<!-- ═══════════════════════════════════════ -->
-<!--  TAB 4: APEX AI — TERMINAL            -->
-<!-- ═══════════════════════════════════════ -->
-<div id="tab-ai" class="tab">
-    <div class="c">
-        <div class="card mt16">
-            <div class="eyebrow">Bio-Update — Données du Jour</div>
+      <div class="term-header">
+        <div class="tdot r"></div><div class="tdot y"></div><div class="tdot g"></div>
+        <span class="term-info">APEX KERNEL v7.3 · 5 AGENTS · GEMINI 2.5</span>
+      </div>
+      <div id="terminal"></div>
 
-            <textarea id="ia-input" class="apex-input" rows="4"
-                placeholder="Ex: Couché 1h, réveil 9h. Bien dormi. Pizza hier soir. Upper aujourd'hui."></textarea>
+      <div class="g mt12">
+        <div class="ey">Rappels Bio-Sync</div>
+        <div class="text-d fs11" style="margin-bottom:12px;">Hydratation (+90min), Stack AM, ZMA PM</div>
+        <button class="btn btn-g" onclick="reqNotif()">🔔 Activer Notifications</button>
+      </div>
+    </div><!-- /t3 -->
 
-            <!-- Energy Level Pills -->
-            <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Niveau d'énergie</div>
-            <div class="energy-pills">
-                <div class="e-pill e-low" id="ep-low" onclick="setEnergy(1)">🔴<br>Bas</div>
-                <div class="e-pill e-mid" id="ep-mid" onclick="setEnergy(5)">🟠<br>Moyen</div>
-                <div class="e-pill selected" id="ep-high" onclick="setEnergy(10)">🟢<br>Élevé</div>
-            </div>
+  </div><!-- /tabs-wrap -->
+</div><!-- /app -->
 
-            <!-- Cheat Toggle -->
-            <div class="flex-between" style="margin-bottom:14px;">
-                <span style="font-size:13px; font-weight:700;">Écart nutritionnel (sel/sucre) ?</span>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-ghost" id="cheat-no" style="width:auto; padding:8px 16px; font-size:12px;" onclick="setCheat(false)">❌ Non</button>
-                    <button class="btn" id="cheat-yes" style="width:auto; padding:8px 16px; font-size:12px; background:var(--red-dim); color:var(--red); border:1px solid var(--red);" onclick="setCheat(true)">🔥 Oui</button>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" onclick="runApexAI()">🧠 Lancer Conseil Expert</button>
-        </div>
-
-        <!-- Terminal -->
-        <div class="terminal-header">
-            <div class="terminal-dot dot-red"></div>
-            <div class="terminal-dot dot-yellow"></div>
-            <div class="terminal-dot dot-green"></div>
-            <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">APEX KERNEL v7.2 — 5 AGENTS ACTIFS</span>
-        </div>
-        <div id="ai-terminal"></div>
-
-        <!-- Notification Setup -->
-        <div class="card mt16">
-            <div class="eyebrow">Notifications Bio-Sync</div>
-            <p style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">Activer les rappels intelligents (hydratation, suppléments, ZMA)</p>
-            <button class="btn btn-ghost" onclick="requestNotifications()">🔔 Activer les Rappels</button>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════════════════════════════════ -->
-<!--  NAVIGATION                            -->
-<!-- ═══════════════════════════════════════ -->
+<!-- NAV -->
 <nav>
-    <button class="nav-btn active" id="nav-core" onclick="switchTab('tab-core', 'nav-core')">
-        <span class="nav-icon">📊</span><span class="nav-lab">Core</span>
-    </button>
-    <button class="nav-btn" id="nav-gym" onclick="switchTab('tab-gym', 'nav-gym')">
-        <span class="nav-icon">⚡</span><span class="nav-lab">Gym</span>
-    </button>
-    <button class="nav-btn" id="nav-nutrition" onclick="switchTab('tab-nutrition', 'nav-nutrition')">
-        <span class="nav-icon">🥗</span><span class="nav-lab">Nutrition</span>
-    </button>
-    <button class="nav-btn" id="nav-ai" onclick="switchTab('tab-ai', 'nav-ai')">
-        <span class="nav-icon">🧠</span><span class="nav-lab">Apex AI</span>
-    </button>
+  <button class="nb on" id="n0" onclick="goTab(0)"><span class="ni">📊</span><span class="nl">Core</span></button>
+  <button class="nb" id="n1" onclick="goTab(1)"><span class="ni">⚡</span><span class="nl">Gym</span></button>
+  <button class="nb" id="n2" onclick="goTab(2)"><span class="ni">🥗</span><span class="nl">Nutrition</span></button>
+  <button class="nb" id="n3" onclick="goTab(3)"><span class="ni">🧠</span><span class="nl">Apex AI</span></button>
 </nav>
 
-<script type="module">
-// ═══════════════════════════════════════════════════════════
-// APEX OS V7.2 — ENGINE
-// Stack: idb-keyval + svg-gauge + sparklines + Gemini 2.5
-// ═══════════════════════════════════════════════════════════
+<script>
+/* ═══════════════════════════════════════════════════
+   APEX OS V7.3 — ENGINE CORE
+   Vanilla JS · IndexedDB natif · Gemini 2.5 Streaming
+   ═══════════════════════════════════════════════════ */
 
-import { get, set, update } from 'https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm';
-
-// ─── CONFIG ───────────────────────────────────────────────
+// ─── CONFIG ──────────────────────────────────────
 const CFG = {
-    GEMINI_KEY: "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA",
-    GEMINI_MODEL: "gemini-2.5-flash-preview-04-17",
-    LONDON_EXIT: new Date('2026-04-21T00:00:00Z'),
-    WATER_TARGET: 4.5,
-    BF_START: 14.0,
-    BF_TARGET: 11.5,
-    LBM: 64.8,
-    WEIGHT: 75.3,
-    TDEE: 2423,
-    DEFICIT_TARGET: 500,
+  KEY: 'AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA',
+  MODEL: 'gemini-2.5-flash-preview-04-17',
+  EXIT: new Date('2026-04-21T00:00:00Z'),
+  W_TARGET: 4.5,
+  LBM: 64.8, WEIGHT: 75.3, TDEE: 2423,
+  BF: 14.0, BF_TARGET: 11.5,
 };
 
-// ─── STATE ────────────────────────────────────────────────
+// ─── STATE ───────────────────────────────────────
 let S = {
-    water: 0,
-    cheat: false,
-    energy: 10,
-    checks: {},
-    skinZones: [],
-    lifts: [],
-    sessionLifts: [],
-    sessionVolume: 0,
-    meals: [],
-    sodiumToday: 0,
-    waterHistory: [],
-    tonnageHistory: [],
-    bf: 14.0,
-    wakeTime: "09:00",
-    sleepTime: "01:00",
+  water: 0, cheat: false, energy: 10,
+  checks: {}, skin: [],
+  lifts: [], sessionLifts: [], sessionVol: 0,
+  meals: [], sodiumToday: 0,
+  wH: [0,0,0,0,0,0,0,0,0,0],
+  tH: [0,0,0,0,0,0,0,0,0,0],
+  bf: 14.0,
 };
 
-// ─── GAUGE INSTANCE ───────────────────────────────────────
-let readinessGauge;
+// ─── INDEXEDDB ───────────────────────────────────
+let IDB;
+const req = indexedDB.open('apexV73', 1);
+req.onupgradeneeded = e => {
+  const db = e.target.result;
+  if (!db.objectStoreNames.contains('state')) db.createObjectStore('state');
+};
+req.onsuccess = e => {
+  IDB = e.target.result;
+  const tx = IDB.transaction('state','readonly');
+  const r2 = tx.objectStore('state').get('main');
+  r2.onsuccess = () => {
+    if (r2.result) { S = {...S, ...r2.result}; S.sessionLifts=[]; S.sessionVol=0; }
+    boot();
+  };
+};
+req.onerror = () => boot();
 
-// ─── BOOT ─────────────────────────────────────────────────
-async function boot() {
-    const saved = await get('apex_v72');
-    if (saved) {
-        S = { ...S, ...saved };
-        S.sessionLifts = [];
-        S.sessionVolume = 0;
-    }
-
-    initGauge();
-    restoreUI();
-    tick();
-    setInterval(tick, 1000);
-    renderTimeline();
-    renderLiftHistory();
-    updateReadiness();
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
+function save() {
+  if (!IDB) return;
+  const tx = IDB.transaction('state','readwrite');
+  tx.objectStore('state').put(S, 'main');
 }
 
-// ─── GAUGE INIT ───────────────────────────────────────────
-function initGauge() {
-    const el = document.getElementById('readiness-gauge');
-    readinessGauge = Gauge(el, {
-        max: 100,
-        dialStartAngle: 220,
-        dialEndAngle: -40,
-        radius: 42,
-        color: (v) => v >= 80 ? '#00ffcc' : v >= 60 ? '#ff9500' : '#ff3b30',
-        label: () => '',
-    });
-    readinessGauge.setValue(0);
+// ─── BOOT ────────────────────────────────────────
+function boot() {
+  restoreUI();
+  tick(); setInterval(tick, 1000);
+  renderTL(); setInterval(renderTL, 60000);
+  calcIF();
+  initSwipe();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
-// ─── READINESS ENGINE 2.0 ─────────────────────────────────
-function calcReadiness() {
-    let score = 100;
-    const penalties = [];
-
-    if (S.water < 2)          { score -= 20; penalties.push('Déshydratation sévère'); }
-    else if (S.water < 3.5)   { score -= 10; }
-
-    if (S.cheat)               { score -= 35; penalties.push('Sodium load actif'); }
-
-    if (!S.checks['cp-wake'])  { score -= 10; }
-    if (!S.checks['cp-supps']) { score -= 10; }
-    if (!S.checks['cp-skin'])  { score -= 10; }
-    if (!S.checks['cp-training']) { score -= 15; }
-
-    // Skin zones
-    score -= (S.skinZones.length * 5);
-
-    // Energy
-    if (S.energy <= 3)        { score -= 15; penalties.push('Énergie critique'); }
-    else if (S.energy <= 6)   { score -= 7; }
-
-    // Sleep calc (simple heuristic)
-    const [sleepH] = S.sleepTime.split(':').map(Number);
-    const [wakeH] = S.wakeTime.split(':').map(Number);
-    let sleepDur = (wakeH + 24 - sleepH) % 24;
-    if (sleepDur < 6)         { score -= 15; penalties.push('Sommeil insuffisant'); }
-    else if (sleepDur >= 8)   { score += 5; }
-
-    return { score: Math.max(10, Math.min(100, Math.round(score))), penalties };
-}
-
-function updateReadiness() {
-    const { score, penalties } = calcReadiness();
-    document.getElementById('readiness-score').textContent = score;
-    readinessGauge.setValueAnimated(score, 1.2);
-
-    // Dynamic gauge color — done via svg-gauge color fn above
-    const scoreEl = document.getElementById('readiness-score');
-    scoreEl.style.color = score >= 80 ? '#00ffcc' : score >= 60 ? '#ff9500' : '#ff3b30';
-
-    persist();
-}
-
-// ─── CLOCK & COUNTDOWN ────────────────────────────────────
+// ─── CLOCK & COUNTDOWN ───────────────────────────
 function tick() {
-    const now = new Date();
-    document.getElementById('clock').textContent =
-        now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    document.getElementById('hero-date').textContent =
-        now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-    const diff = Math.ceil((CFG.LONDON_EXIT - now) / 86400000);
-    document.getElementById('countdown').textContent = `${diff} J`;
+  const n = new Date();
+  document.getElementById('clk').textContent =
+    n.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('hdate').textContent =
+    n.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+  const diff = Math.ceil((CFG.EXIT - n) / 86400000);
+  document.getElementById('cdwn').textContent = diff + ' J';
+  // IF duration update
+  const el = document.getElementById('ifdur');
+  if (el) {
+    const [h,m] = (document.getElementById('ifstart')||{value:'22:00'}).value.split(':').map(Number);
+    const start = new Date(); start.setHours(h,m,0,0);
+    if (n < start) start.setDate(start.getDate()-1);
+    const dur = (n - start) / 3600000;
+    el.textContent = dur > 0 ? dur.toFixed(1) + 'h' : '--h';
+  }
 }
 
-// ─── TAB NAVIGATION ───────────────────────────────────────
-window.switchTab = function(tabId, navId) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    if (navId) document.getElementById(navId).classList.add('active');
-    window.scrollTo(0, 0);
-};
+// ─── TAB NAVIGATION ──────────────────────────────
+let curTab = 0;
+function goTab(i) {
+  curTab = i;
+  document.getElementById('tabs').style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.nb').forEach((b,j) => b.classList.toggle('on', j===i));
+  // Scroll to top of tab
+  document.getElementById('t'+i).scrollTop = 0;
+}
+window.goTab = goTab;
 
-// ─── WATER ────────────────────────────────────────────────
-window.addWater = function() {
-    S.water = Math.min(6, S.water + 0.25);
-    document.getElementById('water-val').textContent = S.water.toFixed(2).replace('.', ',');
-    const pct = Math.min(100, (S.water / CFG.WATER_TARGET) * 100);
-    document.getElementById('water-bar').style.width = pct + '%';
-    if (navigator.vibrate) navigator.vibrate(40);
-    updateReadiness();
-    updateSparklines();
-};
+// ─── SWIPE GESTURES ──────────────────────────────
+function initSwipe() {
+  let sx=0, sy=0, moving=false;
+  const wrap = document.getElementById('tabs');
+  wrap.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    moving = false;
+  }, {passive:true});
+  wrap.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - sx;
+    const dy = e.touches[0].clientY - sy;
+    if (!moving && Math.abs(dy) > Math.abs(dx)) return;
+    moving = true;
+    e.preventDefault();
+    const base = curTab * 100;
+    const pct = base - (dx / window.innerWidth * 100);
+    const clamped = Math.max(0, Math.min(3, pct/100));
+    wrap.style.transition = 'none';
+    wrap.style.transform = `translateX(-${clamped*100}%)`;
+  }, {passive:false});
+  wrap.addEventListener('touchend', e => {
+    wrap.style.transition = '';
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 60) {
+      if (dx < 0 && curTab < 3) goTab(curTab+1);
+      else if (dx > 0 && curTab > 0) goTab(curTab-1);
+    } else goTab(curTab);
+    moving = false;
+  });
+}
 
-// ─── CHECKS ───────────────────────────────────────────────
-window.toggleCheck = function(id) {
-    const pill = document.getElementById(id);
-    const cb = pill.querySelector('input[type=checkbox]');
-    cb.checked = !cb.checked;
-    S.checks[id] = cb.checked;
-    pill.classList.toggle('done', cb.checked);
-    if (navigator.vibrate) navigator.vibrate(cb.checked ? [30,20,60] : 20);
-    updateReadiness();
-};
+// ─── READINESS ENGINE 2.0 ────────────────────────
+function calcR() {
+  let s = 100;
+  if (S.water < 1.5)      s -= 20;
+  else if (S.water < 3)   s -= 10;
+  if (S.cheat)            s -= 35;
+  if (!S.checks[0])       s -= 10;
+  if (!S.checks[1])       s -= 10;
+  if (!S.checks[3])       s -= 10;
+  if (!S.checks[4])       s -= 15;
+  s -= S.skin.length * 5;
+  if (S.energy <= 3)      s -= 15;
+  else if (S.energy <= 6) s -= 7;
+  if (S.checks[2])        s += 5;
+  if (S.checks[5])        s += 5;
+  return Math.max(5, Math.min(100, Math.round(s)));
+}
 
-// ─── SKIN ZONES ───────────────────────────────────────────
-window.toggleSkinZone = function(id) {
+function updateR() {
+  const s = calcR();
+  const col = s >= 80 ? '#00ffcc' : s >= 60 ? '#ff9f0a' : '#ff3b30';
+  const el = document.getElementById('gscore');
+  el.textContent = s;
+  el.style.color = col;
+  // SVG gauge (circumference = 2π×45 ≈ 283)
+  const offset = 283 - (283 * s / 100);
+  const fill = document.getElementById('gfill');
+  fill.style.strokeDashoffset = offset;
+  fill.style.stroke = col;
+  fill.style.filter = `drop-shadow(0 0 8px ${col}66)`;
+  save();
+}
+
+// ─── WATER ───────────────────────────────────────
+function addWater() {
+  S.water = Math.min(6, parseFloat((S.water + 0.25).toFixed(2)));
+  document.getElementById('wval').textContent = S.water.toFixed(2).replace('.',',');
+  const pct = Math.min(100, S.water / CFG.W_TARGET * 100);
+  document.getElementById('wbar').style.width = pct+'%';
+  S.wH.push(S.water); S.wH.shift();
+  spark('wspk', S.wH, '#00ffcc');
+  if (navigator.vibrate) navigator.vibrate(35);
+  updateR();
+}
+window.addWater = addWater;
+
+// ─── CHECKS ──────────────────────────────────────
+const CHECKS_N = 6;
+function ck(i) {
+  S.checks[i] = !S.checks[i];
+  document.getElementById('cb'+i).parentElement.classList.toggle('done', S.checks[i]);
+  const box = document.getElementById('cb'+i);
+  box.style.background = S.checks[i] ? 'var(--accent)' : '';
+  box.style.borderColor = S.checks[i] ? 'var(--accent)' : '';
+  box.style.setProperty('--ch', S.checks[i] ? '1' : '0');
+  // checkmark via text
+  box.textContent = S.checks[i] ? '✓' : '';
+  box.style.color = '#000'; box.style.fontSize='13px'; box.style.fontWeight='900';
+  box.style.display='flex'; box.style.alignItems='center'; box.style.justifyContent='center';
+  if (navigator.vibrate) navigator.vibrate(S.checks[i] ? [25,15,50] : 20);
+  updateR();
+}
+window.ck = ck;
+
+// ─── SKIN ZONES ──────────────────────────────────
+const SZ_N = 6;
+function szk(i) {
+  const el = document.getElementById('sz'+i);
+  el.classList.toggle('on');
+  const idx = S.skin.indexOf(i);
+  if (idx===-1) S.skin.push(i); else S.skin.splice(idx,1);
+  if (navigator.vibrate) navigator.vibrate(30);
+  updateR();
+}
+window.szk = szk;
+
+// ─── CHEAT ───────────────────────────────────────
+function setCheat(v) {
+  S.cheat = v;
+  document.getElementById('mval').textContent = v ? 'FLUSH 🔴' : 'CLEAN ✅';
+  document.getElementById('mval').style.color = v ? 'var(--red)' : 'var(--accent)';
+  document.getElementById('mbar').style.width = v ? '20%' : '100%';
+  document.getElementById('mbar').className = 'µfill'+(v?' r':'');
+  document.getElementById('flush-card').style.display = v ? 'block' : 'none';
+  if (navigator.vibrate && v) navigator.vibrate([100,50,100]);
+  updateR();
+}
+window.setCheat = setCheat;
+
+// ─── ENERGY ──────────────────────────────────────
+function setEn(v) {
+  S.energy = v;
+  ['ep0','ep1','ep2'].forEach(id => {
     const el = document.getElementById(id);
-    el.classList.toggle('active');
-    const idx = S.skinZones.indexOf(id);
-    if (idx === -1) S.skinZones.push(id);
-    else S.skinZones.splice(idx, 1);
-    if (navigator.vibrate) navigator.vibrate(30);
-    updateReadiness();
-};
+    el.className = 'ep ' + (id==='ep0'?'low':id==='ep1'?'mid':'');
+  });
+  const idx = v<=3?0:v<=6?1:2;
+  const sel = document.getElementById('ep'+idx);
+  sel.className = 'ep sel ' + (idx===0?'low':idx===1?'mid':'');
+  updateR();
+}
+window.setEn = setEn;
 
-// ─── CHEAT TOGGLE ─────────────────────────────────────────
-window.setCheat = function(val) {
-    S.cheat = val;
-    document.getElementById('metabolic-val').textContent = val ? 'FLUSH 🔴' : 'CLEAN ✅';
-    document.getElementById('metabolic-val').style.color = val ? 'var(--red)' : 'var(--accent)';
-    document.getElementById('metabolic-bar').style.width = val ? '30%' : '100%';
-    document.getElementById('metabolic-bar').className = 'pbar-fill ' + (val ? 'red' : '');
-    document.getElementById('flush-card').style.display = val ? 'block' : 'none';
-    if (navigator.vibrate && val) navigator.vibrate([100, 50, 100]);
-    updateReadiness();
-};
-
-// ─── ENERGY ───────────────────────────────────────────────
-window.setEnergy = function(val) {
-    S.energy = val;
-    ['ep-low','ep-mid','ep-high'].forEach(id => document.getElementById(id).classList.remove('selected'));
-    if (val <= 3) document.getElementById('ep-low').classList.add('selected');
-    else if (val <= 6) document.getElementById('ep-mid').classList.add('selected');
-    else document.getElementById('ep-high').classList.add('selected');
-    updateReadiness();
-};
-
-// ─── TIMELINE DYNAMIQUE ───────────────────────────────────
-function renderTimeline() {
-    const now = new Date();
-    const h = now.getHours();
-    const [wakeH] = S.wakeTime.split(':').map(Number);
-
-    const events = [
-        { offset: 0,   title: 'Kickstart',    desc: 'Eau chaude + Citron' },
-        { offset: 1,   title: 'Stack AM',     desc: 'B-Complex + Lion\'s + Ashwa' },
-        { offset: 4,   title: 'Litre 2',      desc: 'Eau + électrolytes' },
-        { offset: 7,   title: 'Omega-3',      desc: 'Anti-inflammatoire systémique' },
-        { offset: 10,  title: 'Créatine',     desc: '5g post-training ou avec repas' },
-        { offset: 13,  title: 'Dernier Repas',desc: 'Prot + Fiber + Low Sodium', urgent: true },
-        { offset: 16,  title: 'ZMA',          desc: 'Zinc + Mag + B6 + Salicylic' },
-    ];
-
-    const list = document.getElementById('timeline-list');
-    list.innerHTML = events.map(ev => {
-        const evH = (wakeH + ev.offset) % 24;
-        const isPast = h > evH && !(h > 20 && evH < 5);
-        const isNow = Math.abs(h - evH) <= 1;
-        const cls = isNow ? 'now' : isPast ? 'past' : ev.urgent ? 'urgent' : '';
-        return `<div class="t-item ${cls}">
-            <div class="t-time">${String(evH).padStart(2,'0')}:00</div>
-            <div class="t-title">${ev.title}</div>
-            <div class="t-desc">${ev.desc}</div>
-        </div>`;
-    }).join('');
+// ─── TIMELINE DYNAMIQUE ──────────────────────────
+function renderTL() {
+  const h = new Date().getHours();
+  const events = [
+    {h:9,  t:'Kickstart',   d:'Eau chaude + Citron'},
+    {h:10, t:'Stack AM',    d:"B-Comp + Lion's + Ashwa"},
+    {h:13, t:'Litre 2',     d:'Eau + électrolytes'},
+    {h:16, t:'Omega-3',     d:'Anti-inflam systémique'},
+    {h:19, t:'Créatine',    d:'5g + repas'},
+    {h:22, t:'Last Meal',   d:'Prot + Fiber · Low Na', warn:true},
+    {h:1,  t:'ZMA',         d:'Zinc + Mag + B6 + Salic'},
+  ];
+  document.getElementById('tlist').innerHTML = events.map(e => {
+    const diff = ((e.h - h + 24) % 24);
+    const past = diff > 18;
+    const now = diff < 2 && !past;
+    const cls = now?'now':past?'past':e.warn?'warn':'';
+    return `<div class="tl ${cls}">
+      <div class="tl-time">${String(e.h).padStart(2,'0')}:00</div>
+      <div class="tl-title">${e.t}</div>
+      <div class="tl-desc">${e.d}</div>
+    </div>`;
+  }).join('');
 }
 
-// ─── GYM / LIFTS ──────────────────────────────────────────
-window.logLift = function() {
-    const name = document.getElementById('lift-id').value;
-    const w = parseFloat(document.getElementById('lift-w').value);
-    const r = parseInt(document.getElementById('lift-r').value);
-    const sets = parseInt(document.getElementById('lift-sets').value) || 4;
+// ─── GYM ─────────────────────────────────────────
+const LNAMES = {bench:'Incline Bench',row:'Barbell Row',legpress:'Leg Press',bulgarian:'Bulgarian SS',ohp:'OHP',rdl:'Romanian DL'};
 
-    if (!w || !r) return;
+function logLift() {
+  const name = document.getElementById('lid').value;
+  const w = parseFloat(document.getElementById('lw').value);
+  const r = parseInt(document.getElementById('lr').value);
+  const sets = parseInt(document.getElementById('ls').value) || 4;
+  if (!w || !r) { if(navigator.vibrate) navigator.vibrate([50,50,50]); return; }
 
-    const orm = Math.round(w * (1 + r / 30));
-    const tonnage = w * r * sets;
+  const orm = Math.round(w * (1 + r/30));
+  const vol = w * r * sets;
+  S.sessionVol += vol;
+  S.sessionLifts.push({name,w,r,sets,orm,vol,ts:Date.now()});
+  S.lifts.push({name,w,r,sets,orm,date:new Date().toISOString()});
+  S.tH.push(S.sessionVol); S.tH.shift();
 
-    S.sessionLifts.push({ name, w, r, sets, orm, tonnage, ts: Date.now() });
-    S.sessionVolume += tonnage;
-    S.lifts.push({ name, w, r, sets, orm, date: new Date().toISOString() });
+  document.getElementById('orm').textContent = orm+' kg';
+  document.getElementById('svol').textContent = S.sessionVol+' kg';
+  document.getElementById('tvol').textContent = S.sessionVol;
+  spark('tspk', S.tH, '#0a84ff');
 
-    document.getElementById('orm-display').textContent = `${orm} kg`;
-    document.getElementById('session-vol').textContent = S.sessionVolume;
-    document.getElementById('tonnage-val').innerHTML = `${S.sessionVolume}<span class="u">kg</span>`;
+  // Progressive overload analysis
+  const prev = S.lifts.filter(l=>l.name===name&&l.orm>0).slice(-6,-1);
+  const ob = document.getElementById('olbadge');
+  if (prev.length>0) {
+    const avg = prev.reduce((a,b)=>a+b.orm,0)/prev.length;
+    const d = ((orm-avg)/avg*100).toFixed(1);
+    ob.innerHTML = d>0
+      ? `<div class="olbadge up">📈 +${d}% vs moy — Overload ✅</div>`
+      : `<div class="olbadge warn">⚠️ ${d}% — Stagnation. Ajuste le volume.</div>`;
+  }
+  if (navigator.vibrate) navigator.vibrate([80,40,120]);
+  renderLH(); updateR();
+  document.getElementById('lw').value='';
+  document.getElementById('lr').value='';
+}
+window.logLift = logLift;
 
-    // Overload analysis
-    const prev = S.lifts.filter(l => l.name === name).slice(-6, -1);
-    if (prev.length > 0) {
-        const avgPrevOrm = prev.reduce((a,b) => a + b.orm, 0) / prev.length;
-        const delta = ((orm - avgPrevOrm) / avgPrevOrm * 100).toFixed(1);
-        const status = document.getElementById('overload-status');
-        if (delta > 0) {
-            status.innerHTML = `<div class="overload-badge up">📈 +${delta}% vs moy. précédente — Progressive Overload ✅</div>`;
-        } else {
-            status.innerHTML = `<div class="overload-badge warn">⚠️ ${delta}% — Stagnation détectée. Ajuste le volume.</div>`;
-        }
+function renderLH() {
+  const el = document.getElementById('lhist');
+  if (!S.sessionLifts.length) { el.innerHTML='<div class="text-d fs11 ta-c" style="padding:16px">Aucun lift ce session</div>'; return; }
+  el.innerHTML = S.sessionLifts.slice().reverse().map(l=>`
+    <div class="lh-item">
+      <div>
+        <div class="lh-name">${LNAMES[l.name]||l.name}</div>
+        <div class="lh-meta">${l.w}kg × ${l.r} reps × ${l.sets} séries · ${Math.round(l.vol)}kg vol</div>
+      </div>
+      <div class="lh-orm">${l.orm} kg<small>1RM</small></div>
+    </div>`).join('');
+}
+
+// ─── REST TIMER ──────────────────────────────────
+let _rt;
+function rst(s) {
+  clearInterval(_rt);
+  const el = document.getElementById('rest-display');
+  if (!s) { el.style.display='none'; return; }
+  el.style.display='block'; el.className='';
+  let left = s;
+  el.textContent = left+'s';
+  _rt = setInterval(()=>{
+    left--;
+    el.textContent = left > 0 ? left+'s' : '🔥 GO';
+    if (left <= 5 && left > 0) el.className='warn';
+    if (left <= 0) {
+      clearInterval(_rt);
+      el.className='go';
+      if (navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
+      setTimeout(()=>{ el.style.display='none'; }, 3000);
     }
+  }, 1000);
+}
+window.rst = rst;
 
-    if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
-    renderLiftHistory();
-    updateSparklines();
-    persist();
-};
+// ─── NUTRITION ───────────────────────────────────
+function mealTypeChange() {
+  const v = document.getElementById('mtype').value;
+  if (v==='cheat') setCheat(true);
+}
+window.mealTypeChange = mealTypeChange;
 
-function renderLiftHistory() {
-    const el = document.getElementById('lift-history');
-    const recent = S.sessionLifts.slice(-5).reverse();
-    if (!recent.length) { el.innerHTML = '<p class="text-dim" style="font-size:12px; text-align:center; padding:12px;">Aucune performance ce session</p>'; return; }
-    el.innerHTML = recent.map(l => `
-        <div class="lift-entry">
-            <div>
-                <div class="lift-name">${liftLabel(l.name)}</div>
-                <div class="lift-meta">${l.w}kg × ${l.r} reps × ${l.sets} séries</div>
-            </div>
-            <div class="lift-orm">${l.orm}kg<br><span style="font-size:9px; color:var(--text-dim);">1RM</span></div>
-        </div>
-    `).join('');
+function logMeal() {
+  const type = document.getElementById('mtype').value;
+  const prot = parseFloat(document.getElementById('mprot').value)||0;
+  const sod  = parseFloat(document.getElementById('msod').value)||0;
+  S.meals.push({type,prot,sod,ts:Date.now()});
+  S.sodiumToday += sod;
+  if (type==='cheat'||sod>800) setCheat(true);
+  const tp = S.meals.reduce((a,m)=>a+m.prot,0);
+  document.getElementById('prot-val').textContent = Math.round(tp)+' / 162g';
+  document.getElementById('pbar').style.width = Math.min(100,tp/162*100)+'%';
+  document.getElementById('mprot').value='';
+  document.getElementById('msod').value='';
+  if(navigator.vibrate) navigator.vibrate(50);
+  save();
+}
+window.logMeal = logMeal;
+
+function calcIF() {
+  const val = document.getElementById('ifstart').value || '22:00';
+  const [h,m] = val.split(':').map(Number);
+  const bh = (h+12)%24;
+  document.getElementById('ifbreak').textContent = String(bh).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+window.calcIF = calcIF;
+
+// ─── SPARKLINES (natif SVG) ───────────────────────
+function spark(id, data, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const valid = data.filter(v=>v>0);
+  if (valid.length < 2) return;
+  const max = Math.max(...data, 0.1);
+  const W = 100, H = 22;
+  const pts = data.map((v,i)=>{
+    const x = (i/(data.length-1))*W;
+    const y = H - (v/max)*(H-2) - 1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="sg${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${pts} ${W},${H} 0,${H}" fill="url(#sg${id})"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"
+      stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+  </svg>`;
 }
 
-function liftLabel(key) {
-    const map = { bench:'Incline Bench', row:'Barbell Row', legpress:'Leg Press', bulgarian:'Bulgarian SS', ohp:'OHP', deadlift:'RDL' };
-    return map[key] || key;
-}
+// ─── APEX AI — 5 AGENTS STREAMING ───────────────
+async function runAI() {
+  const term = document.getElementById('terminal');
+  term.style.display='block';
+  term.innerHTML='<span class="cmd">> APEX KERNEL v7.3 INITIALISÉ\n> INJECTION BIO-DATA...\n> 5 AGENTS EN LIGNE...\n> GÉNÉRATION RAPPORT...\n</span>';
 
-// ─── REST TIMER ───────────────────────────────────────────
-let restInterval;
-window.startRest = function(secs) {
-    clearInterval(restInterval);
-    const el = document.getElementById('rest-timer');
-    el.style.display = 'block';
-    let left = secs;
-    el.textContent = `${left}s`;
-    restInterval = setInterval(() => {
-        left--;
-        el.textContent = `${left}s`;
-        if (left <= 0) {
-            clearInterval(restInterval);
-            el.textContent = '🔥 GO';
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
-            setTimeout(() => { el.style.display = 'none'; }, 3000);
-        }
-    }, 1000);
-};
+  const score = calcR();
+  const inp = document.getElementById('aiinput').value || '(Pas de mise à jour fournie)';
+  const tp  = S.meals.reduce((a,m)=>a+m.prot,0);
 
-// ─── NUTRITION ────────────────────────────────────────────
-window.logMeal = function() {
-    const type = document.getElementById('meal-type').value;
-    const prot = parseFloat(document.getElementById('meal-prot').value) || 0;
-    const sodium = parseFloat(document.getElementById('meal-sodium').value) || 0;
+  const prompt = `Tu es APEX OS v7.3 — système bio-optimisation ultra-personnel pour Mattéo.
 
-    S.meals.push({ type, prot, sodium, ts: Date.now() });
-    S.sodiumToday += sodium;
-
-    if (type === 'cheat' || sodium > 800) setCheat(true);
-
-    // Update macro bars
-    const totalProt = S.meals.reduce((a,m) => a+m.prot, 0);
-    document.getElementById('prot-bar').style.width = Math.min(100, totalProt/162*100) + '%';
-
-    document.getElementById('meal-prot').value = '';
-    document.getElementById('meal-sodium').value = '';
-    if (navigator.vibrate) navigator.vibrate(50);
-    persist();
-};
-
-// ─── SPARKLINES ───────────────────────────────────────────
-function updateSparklines() {
-    S.waterHistory.push(S.water);
-    if (S.waterHistory.length > 10) S.waterHistory.shift();
-
-    S.tonnageHistory.push(S.sessionVolume);
-    if (S.tonnageHistory.length > 10) S.tonnageHistory.shift();
-
-    if (window.Sparkline && S.waterHistory.length > 1) {
-        renderSpark('water-spark', S.waterHistory, '#00ffcc');
-        renderSpark('tonnage-spark', S.tonnageHistory, '#0a84ff');
-    }
-}
-
-function renderSpark(id, data, color) {
-    const el = document.getElementById(id);
-    if (!el || !window.Sparkline) return;
-    el.innerHTML = '';
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '28');
-    el.appendChild(svg);
-    // Simple polyline sparkline fallback
-    const max = Math.max(...data, 1);
-    const pts = data.map((v, i) => {
-        const x = (i / (data.length - 1)) * 100;
-        const y = 28 - (v / max) * 24;
-        return `${x},${y}`;
-    }).join(' ');
-    svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
-    svg.setAttribute('viewBox', `0 0 100 28`);
-    svg.setAttribute('preserveAspectRatio', 'none');
-}
-
-// ─── APEX AI — MULTI-AGENT STREAMING ──────────────────────
-window.runApexAI = function() {
-    const term = document.getElementById('ai-terminal');
-    term.style.display = 'block';
-    term.innerHTML = '<span class="cmd-line">> APEX KERNEL v7.2 — CONNEXION SÉCURISÉE...\n> 5 AGENTS EN LIGNE...\n> INJECTION BIO-DATA...\n</span>';
-
-    const { score } = calcReadiness();
-    const input = document.getElementById('ia-input').value;
-    const totalProt = S.meals.reduce((a,m) => a+m.prot, 0);
-
-    const prompt = `Tu es APEX OS — un système multi-agent de bio-optimisation ultra-personnel.
-    
 BIO-DATA TEMPS RÉEL :
-- Readiness: ${score}/100
-- Hydratation: ${S.water}L / ${CFG.WATER_TARGET}L cible
-- État métabolique: ${S.cheat ? '🔴 SODIUM LOAD — FLUSH REQUIS' : '✅ OPTIMAL'}
-- Énergie subjective: ${S.energy}/10
-- Zones peau actives: ${S.skinZones.length > 0 ? S.skinZones.join(', ') : 'Aucune'}
-- Protéines aujourd'hui: ${totalProt}g / 162g cible
-- Session volume: ${S.sessionVolume}kg
+• Readiness Score : ${score}/100
+• Hydratation : ${S.water}L / 4.5L cible
+• État métabolique : ${S.cheat ? '🔴 SODIUM LOAD ACTIF — FLUSH REQUIS' : '✅ CLEAN OPTIMAL'}
+• Énergie subjective : ${S.energy}/10
+• Zones peau actives : ${S.skin.length ? S.skin.map(i=>['Front','Nez','Menton','Tempes','Joues','Dos'][i]).join(', ') : 'Aucune'}
+• Protéines today : ${Math.round(tp)}g / 162g cible (LBM 64.8kg)
+• Volume session : ${S.sessionVol}kg
 
-PROFIL OPÉRATEUR :
-- Objectif: Sèche extrême 14% → 11% BF (Mattéo, 75.3kg, 175cm, LBM 64.8kg)
-- Programme: PPL Cycle Flottant (Bench / Row / Leg Press focus)
-- Deadline: 21 Avril 2026 — Londres
-- Protocole: Clean Eating + Salt Flush si sodium excessif
-- Problématique peau: Excès sébum Zone T + Acné résiduelle
+PROFIL OPÉRATEUR (IMMUABLE) :
+• Mattéo · 75.3kg · 175cm · 14% BF → cible 11% BF
+• Programme : PPL Cycle Flottant · Focus Bench/Row/Leg Press
+• Nutrition : Clean Eating + Salt Flush Protocol
+• Peau : Sébum excessif Zone T + Acné résiduelle
+• Deadline absolue : 21 Avril 2026 · Londres
 
-UPDATE OPÉRATEUR : "${input}"
+UPDATE OPÉRATEUR : "${inp}"
 
-PROTOCOLE DE RÉPONSE — FORMAT TERMINAL STRICT :
+FORMAT RÉPONSE — TERMINAL STRICT, 5 AGENTS :
 
-[ANALYSTE] Diagnostic chiffré froid. Corrélations eau/sébum/rétention. Chiffres précis.
+[ANALYSTE] Diagnostic chiffré. Corrélations eau/sébum/rétention/cortisol. Chiffres précis uniquement.
 
-[SERGEANT] (Brutalité niveau 9/10 — AUCUNE POLITESSE). Si score < 80 ou cheat actif : détruire verbalement. Si optimal : féliciter militairement.
+[SERGEANT] BRUTALITÉ NIVEAU 9/10. Si score <80 ou cheat actif : destruction verbale totale. Si score >85 : félicitation militaire courte. AUCUNE politesse.
 
-[BIOCHIMISTE] Mécanismes moléculaires. Cortisol vs DHT vs insuline. Rétention eau abdominale. Acné hormonale et sébum.
+[BIOCHIMISTE] Mécanismes moléculaires : DHT/sébum, insuline/rétention eau abdominale, cortisol/catabolisme. Maximum 4 phrases précises.
 
-[NUTRITIONNISTE] Analyse macro aujourd'hui vs cibles. Ajustements protéines pour préserver LBM 64.8kg. Timing nutriments.
+[NUTRITIONNISTE] Analyse macros vs cibles. Ajustements protéines pour préserver LBM 64.8kg en déficit -500kcal. Timing.
 
-[COACH RÉCUP] Protocole exact pour les 12h à venir. ZMA timing. Salicylic timing. Fenêtre anabolique.
+[COACH RÉCUP] Protocole exact 12h à venir. Heures précises. ZMA timing, Salicylic timing, fenêtre anabolique.
 
-ORDONNANCE FINALE : 5 actions numérotées pour les 12 prochaines heures.`;
+ORDONNANCE FINALE ↓
+5 actions numérotées, timing précis, pour les 12 prochaines heures.`;
 
-    streamGemini(prompt, term);
-};
-
-async function streamGemini(prompt, outputEl) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${CFG.GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${CFG.GEMINI_KEY}`;
-
-    try {
-        const resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.85, maxOutputTokens: 2048 }
-            })
-        });
-
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-        const reader = resp.body.getReader();
-        const decoder = new TextDecoder();
-        let raw = '';
-
-        outputEl.innerHTML = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const json = line.replace('data: ', '').trim();
-                if (json === '[DONE]') break;
-                try {
-                    const parsed = JSON.parse(json);
-                    const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                    raw += text;
-                    outputEl.innerHTML = formatTerminal(raw);
-                    outputEl.scrollTop = outputEl.scrollHeight;
-                } catch {}
-            }
-        }
-    } catch (e) {
-        outputEl.innerHTML = `<span class="cmd-line">> ⚠️ ERREUR UPLINK: ${e.message}\n> Vérifie la clé API et la connexion.</span>`;
-    }
+  await stream(prompt, term);
 }
+window.runAI = runAI;
 
-function formatTerminal(text) {
-    return text
-        .replace(/\[ANALYSTE\]/g, '<br><span class="agent-tag tag-analyst">Analyste</span>')
-        .replace(/\[SERGEANT\]/g, '<br><span class="agent-tag tag-sergeant">Sergeant</span>')
-        .replace(/\[BIOCHIMISTE\]/g, '<br><span class="agent-tag tag-bio">Biochimiste</span>')
-        .replace(/\[NUTRITIONNISTE\]/g, '<br><span class="agent-tag tag-nutri">Nutritionniste</span>')
-        .replace(/\[COACH RÉCUP\]/g, '<br><span class="agent-tag tag-recovery">Coach Récup</span>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n/g, '\n');
-}
-
-// ─── NOTIFICATIONS ────────────────────────────────────────
-window.requestNotifications = async function() {
-    if (!('Notification' in window)) return alert('Notifications non supportées.');
-    const perm = await Notification.requestPermission();
-    if (perm === 'granted') {
-        scheduleReminders();
-        new Notification('APEX OS Activé', { body: 'Rappels Bio-Sync configurés.', icon: './icon.png' });
-    }
-};
-
-function scheduleReminders() {
-    // Rappel hydratation toutes les 90 min
-    setInterval(() => {
-        if (S.water < CFG.WATER_TARGET && document.hidden) {
-            new Notification('💧 Hydratation', { body: `${S.water.toFixed(1)}L / ${CFG.WATER_TARGET}L — Bois maintenant.` });
-        }
-    }, 90 * 60 * 1000);
-}
-
-// ─── PERSIST ──────────────────────────────────────────────
-async function persist() {
-    await set('apex_v72', S);
-}
-
-// ─── RESTORE UI ───────────────────────────────────────────
-function restoreUI() {
-    document.getElementById('water-val').textContent = S.water.toFixed(2).replace('.', ',');
-    document.getElementById('water-bar').style.width = Math.min(100, S.water / CFG.WATER_TARGET * 100) + '%';
-    document.getElementById('tonnage-val').innerHTML = `${S.sessionVolume}<span class="u">kg</span>`;
-    document.getElementById('bf-val').textContent = S.bf.toFixed(1);
-
-    Object.entries(S.checks).forEach(([id, val]) => {
-        const pill = document.getElementById(id);
-        if (!pill) return;
-        const cb = pill.querySelector('input');
-        if (cb) cb.checked = val;
-        pill.classList.toggle('done', val);
+async function stream(prompt, out) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${CFG.MODEL}:streamGenerateContent?alt=sse&key=${CFG.KEY}`;
+  try {
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{role:'user',parts:[{text:prompt}]}],
+        generationConfig:{temperature:0.85,maxOutputTokens:2048}
+      })
     });
-
-    S.skinZones.forEach(id => document.getElementById(id)?.classList.add('active'));
-
-    if (S.cheat) setCheat(true);
-
-    updateSparklines();
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let raw = '';
+    out.innerHTML = '';
+    while(true) {
+      const {done,value} = await reader.read();
+      if(done) break;
+      const lines = dec.decode(value,{stream:true}).split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const js = line.replace('data: ','').trim();
+        if (js==='[DONE]') break;
+        try {
+          const p = JSON.parse(js);
+          const t = p.candidates?.[0]?.content?.parts?.[0]?.text||'';
+          raw += t;
+          out.innerHTML = fmt(raw);
+          out.scrollTop = out.scrollHeight;
+        } catch{}
+      }
+    }
+  } catch(e) {
+    out.innerHTML = `<span class="cmd">> ⚠️ ERREUR UPLINK\n> ${e.message}\n> Vérifie connexion + API key.</span>`;
+  }
 }
 
-// ─── INIT ─────────────────────────────────────────────────
-boot();
+function fmt(t) {
+  return t
+    .replace(/\[ANALYSTE\]/g,'<br><span class="at an">Analyste</span>')
+    .replace(/\[SERGEANT\]/g,'<br><span class="at sg">Sergeant</span>')
+    .replace(/\[BIOCHIMISTE\]/g,'<br><span class="at bi">Biochimiste</span>')
+    .replace(/\[NUTRITIONNISTE\]/g,'<br><span class="at nu">Nutritionniste</span>')
+    .replace(/\[COACH RÉCUP\]/g,'<br><span class="at rc">Coach Récup</span>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────
+async function reqNotif() {
+  if (!('Notification' in window)) return;
+  const p = await Notification.requestPermission();
+  if (p==='granted') {
+    new Notification('APEX OS ✓', {body:'Rappels Bio-Sync activés.', icon:'./icon.png'});
+    setInterval(()=>{
+      if (S.water < CFG.W_TARGET && document.hidden)
+        new Notification('💧 Hydratation', {body:`${S.water.toFixed(1)}L / ${CFG.W_TARGET}L — Bois maintenant.`});
+    }, 90*60*1000);
+  }
+}
+window.reqNotif = reqNotif;
+
+// ─── RESTORE UI ──────────────────────────────────
+function restoreUI() {
+  document.getElementById('wval').textContent = S.water.toFixed(2).replace('.',',');
+  document.getElementById('wbar').style.width = Math.min(100,S.water/CFG.W_TARGET*100)+'%';
+  document.getElementById('tvol').textContent = S.sessionVol;
+  document.getElementById('bfval').textContent = S.bf.toFixed(1).replace('.',',');
+
+  for (let i=0;i<CHECKS_N;i++) {
+    if (S.checks[i]) {
+      const el = document.getElementById('cp'+i);
+      if(el) { el.classList.add('done'); }
+      const box = document.getElementById('cb'+i);
+      if (box) {
+        box.textContent='✓'; box.style.background='var(--accent)';
+        box.style.borderColor='var(--accent)'; box.style.color='#000';
+        box.style.fontSize='13px'; box.style.fontWeight='900';
+        box.style.display='flex'; box.style.alignItems='center'; box.style.justifyContent='center';
+      }
+    }
+  }
+  S.skin.forEach(i => document.getElementById('sz'+i)?.classList.add('on'));
+  if (S.cheat) setCheat(true);
+  setEn(S.energy);
+  spark('wspk', S.wH, '#00ffcc');
+  spark('tspk', S.tH, '#0a84ff');
+  updateR();
+  renderLH();
+  calcIF();
+}
 </script>
 </body>
 </html>
