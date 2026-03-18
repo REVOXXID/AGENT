@@ -2,261 +2,1131 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>APEX OS | LEVEL 500</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+    <title>APEX OS | KERNEL V7.2</title>
+
+    <!-- DEPS CDN — Zero framework, total < 80KB -->
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-gauge@1.1.0/dist/gauge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mitjafelicijan/sparklines@master/sparklines.js"></script>
+
     <style>
         :root {
-            --bg: #050505; --panel: #111; --border: #222;
-            --cyan: #00ffcc; --cyan-glow: rgba(0,255,204,0.2);
-            --red: #ff2a2a; --yellow: #ffcc00; --text: #fff; --mut: #666;
+            --bg: #000; --card: #0c0c0e; --panel: #141417; --border: #242429;
+            --accent: #00ffcc; --accent-dim: rgba(0,255,204,0.12); --accent-glow: rgba(0,255,204,0.25);
+            --red: #ff3b30; --red-dim: rgba(255,59,48,0.12);
+            --orange: #ff9500; --blue: #0a84ff; --gold: #ffd60a;
+            --text: #fff; --text-dim: #8e8e93; --text-dark: #3a3a3c;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, monospace; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 90px; }
-        
-        /* Header & Countdown */
-        header { background: #000; padding: 15px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+
+        /* === RESET === */
+        *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            padding-top: calc(var(--safe-top) + 15px);
+            padding-bottom: calc(110px + var(--safe-bottom));
+            overflow-x: hidden;
+            -webkit-user-select: none; user-select: none;
+        }
+        input, textarea, select { -webkit-user-select: auto; user-select: auto; }
+
+        /* === LAYOUT === */
+        .c { padding: 0 18px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .tab { display: none; }
+        .tab.active { display: block; animation: fadeUp .35s cubic-bezier(.4,0,.2,1); }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        /* === CARDS === */
+        .card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 22px; padding: 20px; margin-bottom: 16px;
+            position: relative; overflow: hidden;
+        }
+        .card::before {
+            content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+        }
+        .card.alert::before { background: linear-gradient(90deg, var(--red) 0%, transparent 70%); }
+
+        /* === TYPOGRAPHY === */
+        .eyebrow {
+            font-size: 10px; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 14px;
+        }
+        .big-num { font-size: 34px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; }
+        .unit { font-size: 14px; font-weight: 500; color: var(--text-dim); }
+
+        /* === READINESS HEADER === */
+        .hero { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px 0; margin-bottom: 18px; }
+        .hero-left { display: flex; flex-direction: column; gap: 4px; }
+        .hero-clock { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+        .hero-date { font-size: 11px; color: var(--text-dim); }
+        .hero-deadline {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--red-dim); border: 1px solid var(--red);
+            border-radius: 20px; padding: 4px 10px; margin-top: 6px;
+            font-size: 10px; font-weight: 800; color: var(--red); text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* GAUGE WHOOP ENGINE */
+        .gauge-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+        #readiness-gauge .gauge-container { width: 130px !important; height: 130px !important; }
+        #readiness-gauge svg { width: 130px; height: 130px; }
+        .gauge-center-label {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none;
+        }
+        .gauge-score { font-size: 30px; font-weight: 900; line-height: 1; }
+        .gauge-sub { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+
+        /* === KPI GRID === */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .kpi {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 18px; padding: 16px 14px; transition: transform .15s, background .15s;
+            cursor: pointer; position: relative; overflow: hidden;
+        }
+        .kpi:active { transform: scale(0.96); background: #1a1a1e; }
+        .kpi-val { font-size: 22px; font-weight: 800; display: flex; align-items: baseline; gap: 3px; }
+        .kpi-val .u { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+        .kpi-lab { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
+        .kpi.tap-hint::after {
+            content: '+ TAP'; position: absolute; top: 8px; right: 10px;
+            font-size: 8px; color: var(--text-dark); font-weight: 700;
+        }
+        .kpi-spark { margin-top: 8px; }
+
+        /* === PROGRESS BAR === */
+        .pbar-wrap { margin: 8px 0 4px; }
+        .pbar-bg { background: #1c1c1e; border-radius: 20px; height: 5px; overflow: hidden; }
+        .pbar-fill { height: 100%; border-radius: 20px; background: var(--accent); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+        .pbar-fill.red { background: var(--red); }
+        .pbar-fill.orange { background: var(--orange); }
+
+        /* === TIMELINE === */
+        .timeline-scroll {
+            display: flex; gap: 10px; overflow-x: auto; padding: 4px 0 12px;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .timeline-scroll::-webkit-scrollbar { display: none; }
+        .t-item {
+            min-width: 130px; background: var(--panel); border: 1px solid var(--border);
+            border-radius: 16px; padding: 14px 12px; flex-shrink: 0; transition: border-color .2s;
+        }
+        .t-item.now { border-color: var(--accent); background: var(--accent-dim); }
+        .t-item.past { opacity: 0.4; }
+        .t-item.urgent { border-color: var(--orange); }
+        .t-time { font-size: 10px; color: var(--accent); font-weight: 800; margin-bottom: 5px; letter-spacing: .5px; }
+        .t-item.urgent .t-time { color: var(--orange); }
+        .t-title { font-size: 13px; font-weight: 700; }
+        .t-desc { font-size: 10px; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+
+        /* === CHECKLIST === */
+        .check-pill {
+            display: flex; align-items: center; background: var(--panel);
+            border: 1px solid var(--border); border-radius: 16px;
+            padding: 15px 16px; margin-bottom: 9px; transition: opacity .2s, border-color .2s;
+            cursor: pointer; gap: 14px;
+        }
+        .check-pill.done { opacity: 0.45; border-color: #1c1c1e; }
+        .check-pill input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); flex-shrink: 0; }
+        .check-pill label { font-size: 13px; font-weight: 600; line-height: 1.3; cursor: pointer; }
+        .check-pill .badge {
+            margin-left: auto; font-size: 9px; font-weight: 800; text-transform: uppercase;
+            padding: 3px 7px; border-radius: 8px; letter-spacing: .5px;
+        }
+        .badge-crit { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,59,48,.3); }
+        .badge-ok { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,255,204,.3); }
+
+        /* === SKIN MAP === */
+        .skin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .skin-zone {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 14px; padding: 12px 8px; text-align: center;
+            font-size: 11px; font-weight: 700; cursor: pointer; transition: all .2s;
+        }
+        .skin-zone.active { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+        .skin-zone .zone-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        /* === GYM === */
+        .apex-input {
+            width: 100%; background: #000; border: 1px solid var(--border);
+            border-radius: 14px; padding: 15px 16px; color: var(--text);
+            font-size: 16px; font-family: inherit; margin-bottom: 10px;
+            transition: border-color .2s, box-shadow .2s;
+            -webkit-appearance: none; appearance: none;
+        }
+        .apex-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .apex-input option { background: #1a1a1a; }
+        textarea.apex-input { resize: vertical; min-height: 100px; }
+
+        .btn {
+            width: 100%; padding: 18px; border: none; border-radius: 16px;
+            font-size: 14px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 2px; cursor: pointer; transition: transform .15s, opacity .15s;
+        }
+        .btn:active { transform: translateY(2px); opacity: .8; }
+        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 8px 24px var(--accent-dim); }
+        .btn-ghost { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+        .btn-red { background: var(--red); color: #fff; }
+
+        /* Lift history list */
+        .lift-history { margin-top: 12px; }
+        .lift-entry {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: var(--panel); border-radius: 12px;
+            margin-bottom: 8px; font-size: 13px;
+        }
+        .lift-entry .lift-name { font-weight: 700; }
+        .lift-entry .lift-meta { color: var(--text-dim); font-size: 11px; }
+        .lift-entry .lift-orm { font-weight: 800; color: var(--accent); }
+
+        /* Progression bar lifts */
+        .overload-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 800; padding: 4px 10px;
+            border-radius: 20px; margin-top: 8px;
+        }
+        .overload-badge.up { background: var(--accent-dim); color: var(--accent); }
+        .overload-badge.warn { background: rgba(255,149,0,.12); color: var(--orange); }
+
+        /* === TERMINAL AI === */
+        .terminal-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .terminal-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-red { background: #ff5f57; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #28ca41; }
+
+        #ai-terminal {
+            background: #020202; border: 1px solid #1c1c1e; border-radius: 18px;
+            padding: 20px; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 12px; line-height: 1.7; color: #00ff88;
+            min-height: 80px; display: none; margin-top: 14px;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .agent-tag {
+            display: inline-block; font-size: 9px; font-weight: 900;
+            text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
+            margin-right: 8px; letter-spacing: 1px;
+        }
+        .tag-analyst { background: #0a0a2a; color: var(--blue); border: 1px solid rgba(10,132,255,.3); }
+        .tag-sergeant { background: #2a0808; color: var(--red); border: 1px solid rgba(255,59,48,.3); }
+        .tag-bio { background: #0a2a0a; color: #30d158; border: 1px solid rgba(48,209,88,.3); }
+        .tag-nutri { background: #2a1a00; color: var(--gold); border: 1px solid rgba(255,214,10,.3); }
+        .tag-recovery { background: #1a0a2a; color: #bf5af2; border: 1px solid rgba(191,90,242,.3); }
+        .cmd-line { color: var(--text-dim); font-size: 11px; }
+
+        /* Energy selector */
+        .energy-pills { display: flex; gap: 8px; margin-bottom: 12px; }
+        .e-pill {
+            flex: 1; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--panel); font-size: 11px; font-weight: 800; text-align: center;
+            cursor: pointer; transition: all .2s;
+        }
+        .e-pill.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+        .e-pill.e-low.selected { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+        .e-pill.e-mid.selected { border-color: var(--orange); background: rgba(255,149,0,.12); color: var(--orange); }
+
+        /* === NUTRITION TAB === */
+        .macro-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+        .macro-row .m-name { font-size: 12px; font-weight: 700; }
+        .macro-row .m-val { font-size: 12px; color: var(--text-dim); }
+
+        /* === NAV === */
+        nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,.92); backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-top: 1px solid var(--border);
+            display: flex; z-index: 1000;
+            padding: 12px 0 calc(14px + var(--safe-bottom));
+        }
+        .nav-btn {
+            flex: 1; background: none; border: none;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            color: var(--text-dark); transition: color .2s; cursor: pointer; padding: 4px 0;
+        }
+        .nav-btn.active { color: var(--accent); }
+        .nav-icon { font-size: 22px; line-height: 1; }
+        .nav-lab { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* === UTILS === */
+        .sep { height: 1px; background: var(--border); margin: 18px 0; }
+        .text-accent { color: var(--accent); }
+        .text-red { color: var(--red); }
+        .text-dim { color: var(--text-dim); }
+        .mt8 { margin-top: 8px; }
+        .mt16 { margin-top: 16px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        h1 { font-size: 18px; color: var(--cyan); text-transform: uppercase; letter-spacing: 2px; }
-        .countdown { font-size: 10px; color: var(--yellow); border: 1px solid var(--yellow); padding: 3px 6px; border-radius: 4px; }
-
-        .container { padding: 10px; }
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 10px; position: relative; }
-        .card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 3px; background: var(--cyan); }
-        .card.alert::before { background: var(--red); }
-        h2 { font-size: 12px; color: var(--mut); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-
-        /* Grid & Inputs */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        input, select { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 10px; font-size: 13px; border-radius: 4px; outline: none; }
-        input:focus { border-color: var(--cyan); }
-        
-        .btn { width: 100%; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); padding: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 4px; margin-top: 5px; transition: 0.2s; }
-        .btn:active { background: var(--cyan); color: #000; }
-        .btn-danger { border-color: var(--red); color: var(--red); }
-        .btn-danger:active { background: var(--red); color: #000; }
-
-        /* Visual Trackers */
-        .data-row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding: 8px 0; font-size: 12px; }
-        .water-bar { width: 100%; height: 8px; background: #000; margin-top: 5px; border-radius: 4px; overflow: hidden; }
-        .water-fill { height: 100%; background: var(--cyan); width: 0%; transition: width 0.3s; }
-
-        /* Skincare Zones */
-        .skin-zone { border-left: 2px solid var(--yellow); padding-left: 10px; margin-bottom: 10px; font-size: 11px; }
-        
-        /* Nav */
-        nav { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; border-top: 1px solid var(--border); z-index: 100; }
-        .nav-btn { flex: 1; padding: 15px 0; background: none; border: none; color: var(--mut); font-size: 10px; font-weight: bold; }
-        .nav-btn.active { color: var(--cyan); border-top: 2px solid var(--cyan); background: var(--cyan-glow); }
-        .tab { display: none; } .tab.active { display: block; }
-        
-        /* Terminal */
-        #terminal { background: #000; color: var(--cyan); font-family: monospace; font-size: 11px; padding: 15px; border: 1px solid var(--border); display: none; white-space: pre-wrap; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
-    <header class="flex-between">
-        <h1>APEX<span style="color:#fff">OS</span></h1>
-        <div class="countdown" id="london-countdown">LDN: CALC...</div>
-    </header>
-
-    <div class="container">
-        
-        <div id="tab-bio" class="tab active">
-            <div class="card">
-                <h2>Moteur Chrono-Biologique</h2>
-                <div class="grid-2">
-                    <div>
-                        <label style="font-size:10px;color:var(--mut);">Heure Levé</label>
-                        <input type="time" id="time-wake" onchange="calcChrono()">
-                    </div>
-                    <div>
-                        <label style="font-size:10px;color:var(--mut);">Heure Coucher</label>
-                        <input type="time" id="time-sleep" onchange="calcChrono()">
-                    </div>
-                </div>
-                <div id="chrono-alerts" style="font-size:11px; margin-top:10px; color:var(--yellow);"></div>
-            </div>
-
-            <div class="card">
-                <div class="flex-between">
-                    <h2>Hydratation (4.5L)</h2>
-                    <span id="water-txt" style="font-size:12px;color:var(--cyan);">0 L</span>
-                </div>
-                <div class="water-bar"><div class="water-fill" id="water-fill"></div></div>
-                <button class="btn" onclick="addWater()" style="padding:8px;font-size:10px;margin-top:10px;">+ 0.5L INJECTÉ</button>
-            </div>
-
-            <div class="card alert">
-                <h2 style="color:var(--red);">Skincare : Contrôle Sébum (Zone T)</h2>
-                <div class="skin-zone">
-                    <strong style="color:#fff;">Haut du front / Ligne de cheveux :</strong><br>
-                    Application locale Acide Salicylique (Soir) pour détruire le gras.
-                </div>
-                <div class="skin-zone" style="border-color:var(--cyan);">
-                    <strong style="color:#fff;">Reste du visage :</strong><br>
-                    Acide Hyaluronique sur peau <u style="color:var(--cyan);">humide</u> obligatoire + CeraVe.
-                </div>
-                <button class="btn" onclick="logSkincare('AM')" style="font-size:10px;padding:8px;margin-bottom:5px;">Check Matin OK</button>
-                <button class="btn" onclick="logSkincare('PM')" style="font-size:10px;padding:8px;">Check Soir OK</button>
+<!-- ═══════════════════════════════════════ -->
+<!--  TAB 1: OVERVIEW / CORE               -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-core" class="tab active">
+    <!-- Hero Header -->
+    <div class="hero c">
+        <div class="hero-left">
+            <div class="hero-clock" id="clock">--:--</div>
+            <div class="hero-date" id="hero-date">London, GMT</div>
+            <div class="hero-deadline">🎯 <span id="countdown">-- J</span> London Exit</div>
+        </div>
+        <div class="gauge-wrap">
+            <div id="readiness-gauge"></div>
+            <div class="gauge-center-label">
+                <div class="gauge-score" id="readiness-score">--</div>
+                <div class="gauge-sub">Readiness</div>
             </div>
         </div>
-
-        <div id="tab-gym" class="tab">
-            <div class="card">
-                <h2>Cycle Flottant (Auto-Ajustable)</h2>
-                <div style="font-size:11px;color:var(--mut);margin-bottom:10px;">Si tu rates un jour, le cycle s'adapte.</div>
-                <div class="flex-between" style="background:#000;padding:10px;border:1px solid var(--border);">
-                    <span style="font-size:10px;">PROCHAINE SÉANCE :</span>
-                    <strong id="next-workout" style="color:var(--cyan);font-size:14px;">PUSH</strong>
-                </div>
-                <button class="btn" onclick="cycleWorkout()" style="margin-top:10px;">Valider Séance & Passer à la suivante</button>
-            </div>
-
-            <div class="card">
-                <h2>Core Lifts (Densité Absolue)</h2>
-                <select id="lift-type" style="margin-bottom:10px;">
-                    <option value="bench">Développé Couché (Push/Upper)</option>
-                    <option value="row">Tirage Buste Penché / Tractions (Pull/Upper)</option>
-                    <option value="legpress">Presse à Cuisses / Bulgare (Legs/Lower)</option>
-                </select>
-                <div class="grid-2">
-                    <input type="number" id="lift-w" placeholder="Poids (kg)">
-                    <input type="number" id="lift-r" placeholder="Reps">
-                </div>
-                <button class="btn" onclick="calcTonnage()">Calculer Tonnage Global</button>
-                <div id="tonnage-res" style="font-size:14px;color:var(--cyan);margin-top:10px;text-align:center;"></div>
-            </div>
-        </div>
-
-        <div id="tab-ia" class="tab">
-            <div class="card">
-                <h2>Visual Macros (Sans Balance)</h2>
-                <div class="grid-2">
-                    <select id="food-prot"><option value="0">Protéines ?</option><option value="1">1 Paume</option><option value="2">2 Paumes (Optimal)</option></select>
-                    <select id="food-carb"><option value="0">Glucides ?</option><option value="0.5">0 (Salt Flush)</option><option value="1">1 Poing</option><option value="2">2 Poings (Cheat)</option></select>
-                </div>
-            </div>
-            <div class="card">
-                <h2>Liaison IA Hybride</h2>
-                <input type="text" id="ia-context" placeholder="Update (ex: Fatigué, mangé pizza, salle à 2h...)">
-                <button class="btn" onclick="runIA()" id="btn-ia">INITIER ANALYSE BIO-CHIMIQUE</button>
-                <div id="terminal"></div>
-            </div>
-        </div>
-
     </div>
 
-    <nav>
-        <button class="nav-btn active" onclick="switchTab('bio', this)">CHRONO/BIO</button>
-        <button class="nav-btn" onclick="switchTab('gym', this)">WORKOUT</button>
-        <button class="nav-btn" onclick="switchTab('ia', this)">IA CORE</button>
-    </nav>
+    <div class="c">
+        <!-- KPI Grid -->
+        <div class="kpi-grid">
+            <!-- Water -->
+            <div class="kpi tap-hint" onclick="addWater()" id="kpi-water">
+                <div class="kpi-val"><span id="water-val">0.0</span><span class="u">/ 4.5L</span></div>
+                <div class="kpi-lab">Hydratation</div>
+                <div class="pbar-wrap">
+                    <div class="pbar-bg"><div class="pbar-fill" id="water-bar" style="width:0%"></div></div>
+                </div>
+                <div class="kpi-spark" id="water-spark"></div>
+            </div>
 
-    <script>
-        // --- BASE DATA ---
-        let db = JSON.parse(localStorage.getItem('apexV5')) || { water: 0, workoutIdx: 0 };
-        const cycle = ["PUSH (Pecs/Triceps)", "PULL (Dos/Biceps)", "LEGS (Cuisses/Mollets)", "UPPER (Haut)", "LOWER (Bas)"];
+            <!-- Metabolic State -->
+            <div class="kpi" id="kpi-metabolic" onclick="switchTab('tab-ai')">
+                <div class="kpi-val" id="metabolic-val">CLEAN</div>
+                <div class="kpi-lab">Metabolic State</div>
+                <div class="pbar-wrap mt8">
+                    <div class="pbar-bg"><div class="pbar-fill" id="metabolic-bar" style="width:100%"></div></div>
+                </div>
+            </div>
 
-        function init() {
-            // London Countdown
-            const end = new Date('2026-04-21T00:00:00Z').getTime();
-            const now = new Date().getTime();
-            const days = Math.floor((end - now) / (1000 * 60 * 60 * 24));
-            document.getElementById('london-countdown').innerText = `LDN DEPART: -${days}J`;
+            <!-- BF Progress -->
+            <div class="kpi" id="kpi-bf">
+                <div class="kpi-val"><span id="bf-val">14.0</span><span class="u">% BF</span></div>
+                <div class="kpi-lab">Cible: 11–12%</div>
+                <div class="pbar-wrap">
+                    <div class="pbar-bg"><div class="pbar-fill orange" id="bf-bar" style="width:67%"></div></div>
+                </div>
+            </div>
 
-            // Setup UI
-            document.getElementById('next-workout').innerText = cycle[db.workoutIdx];
-            updateWater();
+            <!-- Session Tonnage -->
+            <div class="kpi" onclick="switchTab('tab-gym')">
+                <div class="kpi-val"><span id="tonnage-val">0</span><span class="u">kg</span></div>
+                <div class="kpi-lab">Session Volume</div>
+                <div class="kpi-spark mt8" id="tonnage-spark"></div>
+            </div>
+        </div>
+
+        <!-- Timeline Bio-Sync Dynamique -->
+        <div class="eyebrow">Timeline Bio-Sync</div>
+        <div class="timeline-scroll" id="timeline-list"></div>
+
+        <!-- Daily Operations Checklist -->
+        <div class="eyebrow mt16">Daily Ops</div>
+
+        <div class="check-pill" id="cp-wake" onclick="toggleCheck('cp-wake')">
+            <input type="checkbox" id="cb-wake">
+            <label for="cb-wake">Réveil Bio-Sync — Eau chaude + Citron</label>
+            <span class="badge badge-crit">-10</span>
+        </div>
+        <div class="check-pill" id="cp-supps" onclick="toggleCheck('cp-supps')">
+            <input type="checkbox" id="cb-supps">
+            <label for="cb-supps">Stack AM — B-Complex + Lion's Mane + Ashwagandha</label>
+            <span class="badge badge-crit">-10</span>
+        </div>
+        <div class="check-pill" id="cp-creatine" onclick="toggleCheck('cp-creatine')">
+            <input type="checkbox" id="cb-creatine">
+            <label for="cb-creatine">Créatine 5g (maintien masse maigre en sèche)</label>
+            <span class="badge badge-ok">+5</span>
+        </div>
+        <div class="check-pill" id="cp-skin" onclick="toggleCheck('cp-skin')">
+            <input type="checkbox" id="cb-skin">
+            <label for="cb-skin">Skincare AM — CeraVe + Salicylic Zone T</label>
+            <span class="badge badge-crit">-10</span>
+        </div>
+        <div class="check-pill" id="cp-training" onclick="toggleCheck('cp-training')">
+            <input type="checkbox" id="cb-training">
+            <label for="cb-training">Séance PPL — Progressive Overload Log</label>
+            <span class="badge badge-crit">-15</span>
+        </div>
+        <div class="check-pill" id="cp-zma" onclick="toggleCheck('cp-zma')">
+            <input type="checkbox" id="cb-zma">
+            <label for="cb-zma">ZMA + Salicylic PM (1:00 Sleep Protocol)</label>
+            <span class="badge badge-ok">+5</span>
+        </div>
+
+        <!-- Skin Zone Map -->
+        <div class="eyebrow mt16">Skin Monitoring — Zone T</div>
+        <div class="card alert">
+            <p class="text-dim" style="font-size:12px; margin-bottom:14px;">Active les zones problématiques du jour (impact Readiness -5 par zone)</p>
+            <div class="skin-grid">
+                <div class="skin-zone" id="sz-front" onclick="toggleSkinZone('sz-front')">
+                    <span class="zone-icon">😓</span>Front
+                </div>
+                <div class="skin-zone" id="sz-nose" onclick="toggleSkinZone('sz-nose')">
+                    <span class="zone-icon">👃</span>Nez
+                </div>
+                <div class="skin-zone" id="sz-chin" onclick="toggleSkinZone('sz-chin')">
+                    <span class="zone-icon">🫧</span>Menton
+                </div>
+                <div class="skin-zone" id="sz-temple" onclick="toggleSkinZone('sz-temple')">
+                    <span class="zone-icon">💢</span>Tempes
+                </div>
+                <div class="skin-zone" id="sz-cheek" onclick="toggleSkinZone('sz-cheek')">
+                    <span class="zone-icon">🔴</span>Joues
+                </div>
+                <div class="skin-zone" id="sz-back" onclick="toggleSkinZone('sz-back')">
+                    <span class="zone-icon">⬛</span>Dos
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  TAB 2: GYM / TRAINING                -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-gym" class="tab">
+    <div class="c">
+        <div class="card mt16">
+            <div class="eyebrow" style="margin-bottom:16px;">Surcharge Progressive — PPL Cycle</div>
+
+            <select id="lift-id" class="apex-input">
+                <option value="bench">🏋️ Incline Bench Press (Push)</option>
+                <option value="row">🔄 Barbell Row (Pull)</option>
+                <option value="legpress">🦵 Leg Press (Legs)</option>
+                <option value="bulgarian">🎯 Bulgarian Split Squat</option>
+                <option value="ohp">💪 OHP (Push)</option>
+                <option value="deadlift">⚡ Romanian Deadlift</option>
+            </select>
+
+            <div class="kpi-grid" style="margin-bottom:12px;">
+                <input type="number" id="lift-w" class="apex-input" placeholder="Poids (kg)" inputmode="decimal" step="0.5">
+                <input type="number" id="lift-r" class="apex-input" placeholder="Reps" inputmode="numeric">
+            </div>
+            <input type="number" id="lift-sets" class="apex-input" placeholder="Séries (ex: 4)" inputmode="numeric">
+            <button class="btn btn-primary" onclick="logLift()">⚡ Enregistrer Performance</button>
+        </div>
+
+        <!-- 1RM + Tonnage Display -->
+        <div class="card">
+            <div class="flex-between">
+                <div>
+                    <div class="eyebrow">1RM Estimé (Epley)</div>
+                    <div class="big-num text-accent" id="orm-display">--</div>
+                    <div class="text-dim" style="font-size:11px; margin-top:4px;">w × (1 + reps/30)</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="eyebrow">Volume Session</div>
+                    <div class="big-num" id="session-vol">0</div>
+                    <div class="text-dim" style="font-size:11px;">kg total</div>
+                </div>
+            </div>
+            <div id="overload-status" class="mt8"></div>
+        </div>
+
+        <!-- Lift History -->
+        <div class="eyebrow">Historique Session</div>
+        <div id="lift-history" class="lift-history"></div>
+
+        <!-- Rest Timer -->
+        <div class="card">
+            <div class="eyebrow">Repos Timer</div>
+            <div class="flex-between" style="gap:8px;">
+                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(60)">60s</button>
+                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(90)">90s</button>
+                <button class="btn btn-ghost" style="font-size:12px;" onclick="startRest(120)">120s</button>
+            </div>
+            <div id="rest-timer" style="text-align:center; font-size:40px; font-weight:900; color:var(--accent); margin-top:12px; display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  TAB 3: NUTRITION                     -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-nutrition" class="tab">
+    <div class="c">
+        <!-- Déficit Calorique Calculé -->
+        <div class="card mt16">
+            <div class="eyebrow">Protocole Sèche — Mattéo</div>
+            <div class="flex-between">
+                <div>
+                    <div style="font-size:11px; color:var(--text-dim);">TDEE estimé</div>
+                    <div style="font-size:22px; font-weight:800;">~2 423<span class="unit"> kcal</span></div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:11px; color:var(--text-dim);">Cible sèche</div>
+                    <div style="font-size:22px; font-weight:800; color:var(--accent);">~1 923<span class="unit"> kcal</span></div>
+                </div>
+            </div>
+            <div class="sep"></div>
+            <!-- Macros Targets -->
+            <div class="eyebrow">Macros Cibles (LBM-based)</div>
+            <div class="macro-row">
+                <span class="m-name">🥩 Protéines</span>
+                <span class="m-val">~162g (2.5g/kg LBM)</span>
+            </div>
+            <div class="pbar-bg" style="margin-bottom:10px;"><div class="pbar-fill" id="prot-bar" style="width:0%"></div></div>
+            <div class="macro-row">
+                <span class="m-name">🍚 Glucides</span>
+                <span class="m-val">~160g (training days)</span>
+            </div>
+            <div class="pbar-bg" style="margin-bottom:10px;"><div class="pbar-fill orange" id="carb-bar" style="width:0%"></div></div>
+            <div class="macro-row">
+                <span class="m-name">🥑 Lipides</span>
+                <span class="m-val">~60g (hormonaux)</span>
+            </div>
+            <div class="pbar-bg"><div class="pbar-fill" id="fat-bar" style="width:0%"></div></div>
+        </div>
+
+        <!-- Log Repas Rapide -->
+        <div class="card">
+            <div class="eyebrow">Log Repas</div>
+            <select id="meal-type" class="apex-input">
+                <option value="clean">✅ Clean Meal</option>
+                <option value="cheat">🚨 Cheat Meal (Sodium Load)</option>
+                <option value="fast">⏱️ Jeûne Intermittent</option>
+                <option value="protein">💊 Shake Protéiné</option>
+            </select>
+            <input type="number" id="meal-prot" class="apex-input" placeholder="Protéines (g)" inputmode="numeric">
+            <input type="number" id="meal-sodium" class="apex-input" placeholder="Sodium estimé (mg)" inputmode="numeric">
+            <button class="btn btn-primary" onclick="logMeal()">Enregistrer Repas</button>
+        </div>
+
+        <!-- Salt Flush Protocol -->
+        <div class="card" id="flush-card" style="display:none;">
+            <div class="eyebrow text-red">🚨 Salt Flush Protocol Actif</div>
+            <p style="font-size:13px; line-height:1.6; color:var(--text-dim);">Sodium détecté. Protocole actif :</p>
+            <div class="mt8">
+                <div class="check-pill" id="fp-water" onclick="toggleCheck('fp-water')">
+                    <input type="checkbox" id="cb-fp-water">
+                    <label>+1.5L eau supplémentaire</label>
+                </div>
+                <div class="check-pill" id="fp-dandelion" onclick="toggleCheck('fp-dandelion')">
+                    <input type="checkbox" id="cb-fp-dandelion">
+                    <label>Thé Pissenlit (diurétique naturel)</label>
+                </div>
+                <div class="check-pill" id="fp-potassium" onclick="toggleCheck('fp-potassium')">
+                    <input type="checkbox" id="cb-fp-potassium">
+                    <label>Banane / KCl (équilibre électrolytes)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fenêtre IF -->
+        <div class="card">
+            <div class="eyebrow">Jeûne Intermittent</div>
+            <div class="flex-between">
+                <div>
+                    <div style="font-size:11px; color:var(--text-dim);">Début jeûne</div>
+                    <input type="time" id="fast-start" class="apex-input" style="width:auto; padding:8px 12px; font-size:14px;" value="22:00">
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--text-dim);">Rupture cible</div>
+                    <div id="fast-break" style="font-size:22px; font-weight:800; color:var(--accent); padding-top:8px;">10:00</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:var(--text-dim);">Durée</div>
+                    <div id="fast-duration" style="font-size:22px; font-weight:800; padding-top:8px;">12h</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  TAB 4: APEX AI — TERMINAL            -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-ai" class="tab">
+    <div class="c">
+        <div class="card mt16">
+            <div class="eyebrow">Bio-Update — Données du Jour</div>
+
+            <textarea id="ia-input" class="apex-input" rows="4"
+                placeholder="Ex: Couché 1h, réveil 9h. Bien dormi. Pizza hier soir. Upper aujourd'hui."></textarea>
+
+            <!-- Energy Level Pills -->
+            <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Niveau d'énergie</div>
+            <div class="energy-pills">
+                <div class="e-pill e-low" id="ep-low" onclick="setEnergy(1)">🔴<br>Bas</div>
+                <div class="e-pill e-mid" id="ep-mid" onclick="setEnergy(5)">🟠<br>Moyen</div>
+                <div class="e-pill selected" id="ep-high" onclick="setEnergy(10)">🟢<br>Élevé</div>
+            </div>
+
+            <!-- Cheat Toggle -->
+            <div class="flex-between" style="margin-bottom:14px;">
+                <span style="font-size:13px; font-weight:700;">Écart nutritionnel (sel/sucre) ?</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" id="cheat-no" style="width:auto; padding:8px 16px; font-size:12px;" onclick="setCheat(false)">❌ Non</button>
+                    <button class="btn" id="cheat-yes" style="width:auto; padding:8px 16px; font-size:12px; background:var(--red-dim); color:var(--red); border:1px solid var(--red);" onclick="setCheat(true)">🔥 Oui</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="runApexAI()">🧠 Lancer Conseil Expert</button>
+        </div>
+
+        <!-- Terminal -->
+        <div class="terminal-header">
+            <div class="terminal-dot dot-red"></div>
+            <div class="terminal-dot dot-yellow"></div>
+            <div class="terminal-dot dot-green"></div>
+            <span style="font-size:10px; color:var(--text-dim); margin-left:6px;">APEX KERNEL v7.2 — 5 AGENTS ACTIFS</span>
+        </div>
+        <div id="ai-terminal"></div>
+
+        <!-- Notification Setup -->
+        <div class="card mt16">
+            <div class="eyebrow">Notifications Bio-Sync</div>
+            <p style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">Activer les rappels intelligents (hydratation, suppléments, ZMA)</p>
+            <button class="btn btn-ghost" onclick="requestNotifications()">🔔 Activer les Rappels</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  NAVIGATION                            -->
+<!-- ═══════════════════════════════════════ -->
+<nav>
+    <button class="nav-btn active" id="nav-core" onclick="switchTab('tab-core', 'nav-core')">
+        <span class="nav-icon">📊</span><span class="nav-lab">Core</span>
+    </button>
+    <button class="nav-btn" id="nav-gym" onclick="switchTab('tab-gym', 'nav-gym')">
+        <span class="nav-icon">⚡</span><span class="nav-lab">Gym</span>
+    </button>
+    <button class="nav-btn" id="nav-nutrition" onclick="switchTab('tab-nutrition', 'nav-nutrition')">
+        <span class="nav-icon">🥗</span><span class="nav-lab">Nutrition</span>
+    </button>
+    <button class="nav-btn" id="nav-ai" onclick="switchTab('tab-ai', 'nav-ai')">
+        <span class="nav-icon">🧠</span><span class="nav-lab">Apex AI</span>
+    </button>
+</nav>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════
+// APEX OS V7.2 — ENGINE
+// Stack: idb-keyval + svg-gauge + sparklines + Gemini 2.5
+// ═══════════════════════════════════════════════════════════
+
+import { get, set, update } from 'https://cdn.jsdelivr.net/npm/idb-keyval@6/+esm';
+
+// ─── CONFIG ───────────────────────────────────────────────
+const CFG = {
+    GEMINI_KEY: "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA",
+    GEMINI_MODEL: "gemini-2.5-flash-preview-04-17",
+    LONDON_EXIT: new Date('2026-04-21T00:00:00Z'),
+    WATER_TARGET: 4.5,
+    BF_START: 14.0,
+    BF_TARGET: 11.5,
+    LBM: 64.8,
+    WEIGHT: 75.3,
+    TDEE: 2423,
+    DEFICIT_TARGET: 500,
+};
+
+// ─── STATE ────────────────────────────────────────────────
+let S = {
+    water: 0,
+    cheat: false,
+    energy: 10,
+    checks: {},
+    skinZones: [],
+    lifts: [],
+    sessionLifts: [],
+    sessionVolume: 0,
+    meals: [],
+    sodiumToday: 0,
+    waterHistory: [],
+    tonnageHistory: [],
+    bf: 14.0,
+    wakeTime: "09:00",
+    sleepTime: "01:00",
+};
+
+// ─── GAUGE INSTANCE ───────────────────────────────────────
+let readinessGauge;
+
+// ─── BOOT ─────────────────────────────────────────────────
+async function boot() {
+    const saved = await get('apex_v72');
+    if (saved) {
+        S = { ...S, ...saved };
+        S.sessionLifts = [];
+        S.sessionVolume = 0;
+    }
+
+    initGauge();
+    restoreUI();
+    tick();
+    setInterval(tick, 1000);
+    renderTimeline();
+    renderLiftHistory();
+    updateReadiness();
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+}
+
+// ─── GAUGE INIT ───────────────────────────────────────────
+function initGauge() {
+    const el = document.getElementById('readiness-gauge');
+    readinessGauge = Gauge(el, {
+        max: 100,
+        dialStartAngle: 220,
+        dialEndAngle: -40,
+        radius: 42,
+        color: (v) => v >= 80 ? '#00ffcc' : v >= 60 ? '#ff9500' : '#ff3b30',
+        label: () => '',
+    });
+    readinessGauge.setValue(0);
+}
+
+// ─── READINESS ENGINE 2.0 ─────────────────────────────────
+function calcReadiness() {
+    let score = 100;
+    const penalties = [];
+
+    if (S.water < 2)          { score -= 20; penalties.push('Déshydratation sévère'); }
+    else if (S.water < 3.5)   { score -= 10; }
+
+    if (S.cheat)               { score -= 35; penalties.push('Sodium load actif'); }
+
+    if (!S.checks['cp-wake'])  { score -= 10; }
+    if (!S.checks['cp-supps']) { score -= 10; }
+    if (!S.checks['cp-skin'])  { score -= 10; }
+    if (!S.checks['cp-training']) { score -= 15; }
+
+    // Skin zones
+    score -= (S.skinZones.length * 5);
+
+    // Energy
+    if (S.energy <= 3)        { score -= 15; penalties.push('Énergie critique'); }
+    else if (S.energy <= 6)   { score -= 7; }
+
+    // Sleep calc (simple heuristic)
+    const [sleepH] = S.sleepTime.split(':').map(Number);
+    const [wakeH] = S.wakeTime.split(':').map(Number);
+    let sleepDur = (wakeH + 24 - sleepH) % 24;
+    if (sleepDur < 6)         { score -= 15; penalties.push('Sommeil insuffisant'); }
+    else if (sleepDur >= 8)   { score += 5; }
+
+    return { score: Math.max(10, Math.min(100, Math.round(score))), penalties };
+}
+
+function updateReadiness() {
+    const { score, penalties } = calcReadiness();
+    document.getElementById('readiness-score').textContent = score;
+    readinessGauge.setValueAnimated(score, 1.2);
+
+    // Dynamic gauge color — done via svg-gauge color fn above
+    const scoreEl = document.getElementById('readiness-score');
+    scoreEl.style.color = score >= 80 ? '#00ffcc' : score >= 60 ? '#ff9500' : '#ff3b30';
+
+    persist();
+}
+
+// ─── CLOCK & COUNTDOWN ────────────────────────────────────
+function tick() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+        now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('hero-date').textContent =
+        now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const diff = Math.ceil((CFG.LONDON_EXIT - now) / 86400000);
+    document.getElementById('countdown').textContent = `${diff} J`;
+}
+
+// ─── TAB NAVIGATION ───────────────────────────────────────
+window.switchTab = function(tabId, navId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    if (navId) document.getElementById(navId).classList.add('active');
+    window.scrollTo(0, 0);
+};
+
+// ─── WATER ────────────────────────────────────────────────
+window.addWater = function() {
+    S.water = Math.min(6, S.water + 0.25);
+    document.getElementById('water-val').textContent = S.water.toFixed(2).replace('.', ',');
+    const pct = Math.min(100, (S.water / CFG.WATER_TARGET) * 100);
+    document.getElementById('water-bar').style.width = pct + '%';
+    if (navigator.vibrate) navigator.vibrate(40);
+    updateReadiness();
+    updateSparklines();
+};
+
+// ─── CHECKS ───────────────────────────────────────────────
+window.toggleCheck = function(id) {
+    const pill = document.getElementById(id);
+    const cb = pill.querySelector('input[type=checkbox]');
+    cb.checked = !cb.checked;
+    S.checks[id] = cb.checked;
+    pill.classList.toggle('done', cb.checked);
+    if (navigator.vibrate) navigator.vibrate(cb.checked ? [30,20,60] : 20);
+    updateReadiness();
+};
+
+// ─── SKIN ZONES ───────────────────────────────────────────
+window.toggleSkinZone = function(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('active');
+    const idx = S.skinZones.indexOf(id);
+    if (idx === -1) S.skinZones.push(id);
+    else S.skinZones.splice(idx, 1);
+    if (navigator.vibrate) navigator.vibrate(30);
+    updateReadiness();
+};
+
+// ─── CHEAT TOGGLE ─────────────────────────────────────────
+window.setCheat = function(val) {
+    S.cheat = val;
+    document.getElementById('metabolic-val').textContent = val ? 'FLUSH 🔴' : 'CLEAN ✅';
+    document.getElementById('metabolic-val').style.color = val ? 'var(--red)' : 'var(--accent)';
+    document.getElementById('metabolic-bar').style.width = val ? '30%' : '100%';
+    document.getElementById('metabolic-bar').className = 'pbar-fill ' + (val ? 'red' : '');
+    document.getElementById('flush-card').style.display = val ? 'block' : 'none';
+    if (navigator.vibrate && val) navigator.vibrate([100, 50, 100]);
+    updateReadiness();
+};
+
+// ─── ENERGY ───────────────────────────────────────────────
+window.setEnergy = function(val) {
+    S.energy = val;
+    ['ep-low','ep-mid','ep-high'].forEach(id => document.getElementById(id).classList.remove('selected'));
+    if (val <= 3) document.getElementById('ep-low').classList.add('selected');
+    else if (val <= 6) document.getElementById('ep-mid').classList.add('selected');
+    else document.getElementById('ep-high').classList.add('selected');
+    updateReadiness();
+};
+
+// ─── TIMELINE DYNAMIQUE ───────────────────────────────────
+function renderTimeline() {
+    const now = new Date();
+    const h = now.getHours();
+    const [wakeH] = S.wakeTime.split(':').map(Number);
+
+    const events = [
+        { offset: 0,   title: 'Kickstart',    desc: 'Eau chaude + Citron' },
+        { offset: 1,   title: 'Stack AM',     desc: 'B-Complex + Lion\'s + Ashwa' },
+        { offset: 4,   title: 'Litre 2',      desc: 'Eau + électrolytes' },
+        { offset: 7,   title: 'Omega-3',      desc: 'Anti-inflammatoire systémique' },
+        { offset: 10,  title: 'Créatine',     desc: '5g post-training ou avec repas' },
+        { offset: 13,  title: 'Dernier Repas',desc: 'Prot + Fiber + Low Sodium', urgent: true },
+        { offset: 16,  title: 'ZMA',          desc: 'Zinc + Mag + B6 + Salicylic' },
+    ];
+
+    const list = document.getElementById('timeline-list');
+    list.innerHTML = events.map(ev => {
+        const evH = (wakeH + ev.offset) % 24;
+        const isPast = h > evH && !(h > 20 && evH < 5);
+        const isNow = Math.abs(h - evH) <= 1;
+        const cls = isNow ? 'now' : isPast ? 'past' : ev.urgent ? 'urgent' : '';
+        return `<div class="t-item ${cls}">
+            <div class="t-time">${String(evH).padStart(2,'0')}:00</div>
+            <div class="t-title">${ev.title}</div>
+            <div class="t-desc">${ev.desc}</div>
+        </div>`;
+    }).join('');
+}
+
+// ─── GYM / LIFTS ──────────────────────────────────────────
+window.logLift = function() {
+    const name = document.getElementById('lift-id').value;
+    const w = parseFloat(document.getElementById('lift-w').value);
+    const r = parseInt(document.getElementById('lift-r').value);
+    const sets = parseInt(document.getElementById('lift-sets').value) || 4;
+
+    if (!w || !r) return;
+
+    const orm = Math.round(w * (1 + r / 30));
+    const tonnage = w * r * sets;
+
+    S.sessionLifts.push({ name, w, r, sets, orm, tonnage, ts: Date.now() });
+    S.sessionVolume += tonnage;
+    S.lifts.push({ name, w, r, sets, orm, date: new Date().toISOString() });
+
+    document.getElementById('orm-display').textContent = `${orm} kg`;
+    document.getElementById('session-vol').textContent = S.sessionVolume;
+    document.getElementById('tonnage-val').innerHTML = `${S.sessionVolume}<span class="u">kg</span>`;
+
+    // Overload analysis
+    const prev = S.lifts.filter(l => l.name === name).slice(-6, -1);
+    if (prev.length > 0) {
+        const avgPrevOrm = prev.reduce((a,b) => a + b.orm, 0) / prev.length;
+        const delta = ((orm - avgPrevOrm) / avgPrevOrm * 100).toFixed(1);
+        const status = document.getElementById('overload-status');
+        if (delta > 0) {
+            status.innerHTML = `<div class="overload-badge up">📈 +${delta}% vs moy. précédente — Progressive Overload ✅</div>`;
+        } else {
+            status.innerHTML = `<div class="overload-badge warn">⚠️ ${delta}% — Stagnation détectée. Ajuste le volume.</div>`;
         }
+    }
 
-        // --- TABS ---
-        function switchTab(id, btn) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-'+id).classList.add('active');
-            btn.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
+    renderLiftHistory();
+    updateSparklines();
+    persist();
+};
+
+function renderLiftHistory() {
+    const el = document.getElementById('lift-history');
+    const recent = S.sessionLifts.slice(-5).reverse();
+    if (!recent.length) { el.innerHTML = '<p class="text-dim" style="font-size:12px; text-align:center; padding:12px;">Aucune performance ce session</p>'; return; }
+    el.innerHTML = recent.map(l => `
+        <div class="lift-entry">
+            <div>
+                <div class="lift-name">${liftLabel(l.name)}</div>
+                <div class="lift-meta">${l.w}kg × ${l.r} reps × ${l.sets} séries</div>
+            </div>
+            <div class="lift-orm">${l.orm}kg<br><span style="font-size:9px; color:var(--text-dim);">1RM</span></div>
+        </div>
+    `).join('');
+}
+
+function liftLabel(key) {
+    const map = { bench:'Incline Bench', row:'Barbell Row', legpress:'Leg Press', bulgarian:'Bulgarian SS', ohp:'OHP', deadlift:'RDL' };
+    return map[key] || key;
+}
+
+// ─── REST TIMER ───────────────────────────────────────────
+let restInterval;
+window.startRest = function(secs) {
+    clearInterval(restInterval);
+    const el = document.getElementById('rest-timer');
+    el.style.display = 'block';
+    let left = secs;
+    el.textContent = `${left}s`;
+    restInterval = setInterval(() => {
+        left--;
+        el.textContent = `${left}s`;
+        if (left <= 0) {
+            clearInterval(restInterval);
+            el.textContent = '🔥 GO';
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
+    }, 1000);
+};
 
-        // --- CHRONO LOGIC ---
-        function calcChrono() {
-            let wake = document.getElementById('time-wake').value;
-            let sleep = document.getElementById('time-sleep').value;
-            if(!wake || !sleep) return;
+// ─── NUTRITION ────────────────────────────────────────────
+window.logMeal = function() {
+    const type = document.getElementById('meal-type').value;
+    const prot = parseFloat(document.getElementById('meal-prot').value) || 0;
+    const sodium = parseFloat(document.getElementById('meal-sodium').value) || 0;
 
-            let sHours = parseInt(sleep.split(':')[0]);
-            let sMins = sleep.split(':')[1];
-            
-            // ZMA Limit (1h avant le coucher, 2h après repas)
-            let zmaH = sHours - 1; if(zmaH < 0) zmaH += 24;
-            // B-Complex Limit (Ne pas prendre 6h avant sommeil)
-            let bCompH = sHours - 6; if(bCompH < 0) bCompH += 24;
+    S.meals.push({ type, prot, sodium, ts: Date.now() });
+    S.sodiumToday += sodium;
 
-            document.getElementById('chrono-alerts').innerHTML = `
-                > DEADLINE B-Complex : ${bCompH}:00 (Sinon insomnie)<br>
-                > ALARME ZMA : ${zmaH}:${sMins} (Estomac vide)<br>
-                > CUT-OFF EAU : ${zmaH}:${sMins} (Pour ne pas uriner la nuit)
-            `;
-        }
+    if (type === 'cheat' || sodium > 800) setCheat(true);
 
-        // --- WATER ---
-        function addWater() {
-            db.water += 0.5;
-            localStorage.setItem('apexV5', JSON.stringify(db));
-            updateWater();
-        }
-        function updateWater() {
-            document.getElementById('water-txt').innerText = db.water.toFixed(1) + " L";
-            document.getElementById('water-fill').style.width = Math.min((db.water/4.5)*100, 100) + '%';
-        }
+    // Update macro bars
+    const totalProt = S.meals.reduce((a,m) => a+m.prot, 0);
+    document.getElementById('prot-bar').style.width = Math.min(100, totalProt/162*100) + '%';
 
-        // --- WORKOUT CYCLE ---
-        function cycleWorkout() {
-            db.workoutIdx = (db.workoutIdx + 1) % cycle.length;
-            localStorage.setItem('apexV5', JSON.stringify(db));
-            document.getElementById('next-workout').innerText = cycle[db.workoutIdx];
-        }
+    document.getElementById('meal-prot').value = '';
+    document.getElementById('meal-sodium').value = '';
+    if (navigator.vibrate) navigator.vibrate(50);
+    persist();
+};
 
-        function calcTonnage() {
-            let w = parseFloat(document.getElementById('lift-w').value);
-            let r = parseFloat(document.getElementById('lift-r').value);
-            if(w>0 && r>0) {
-                document.getElementById('tonnage-res').innerText = `Tonnage Série : ${w*r} KG 🚀`;
+// ─── SPARKLINES ───────────────────────────────────────────
+function updateSparklines() {
+    S.waterHistory.push(S.water);
+    if (S.waterHistory.length > 10) S.waterHistory.shift();
+
+    S.tonnageHistory.push(S.sessionVolume);
+    if (S.tonnageHistory.length > 10) S.tonnageHistory.shift();
+
+    if (window.Sparkline && S.waterHistory.length > 1) {
+        renderSpark('water-spark', S.waterHistory, '#00ffcc');
+        renderSpark('tonnage-spark', S.tonnageHistory, '#0a84ff');
+    }
+}
+
+function renderSpark(id, data, color) {
+    const el = document.getElementById(id);
+    if (!el || !window.Sparkline) return;
+    el.innerHTML = '';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '28');
+    el.appendChild(svg);
+    // Simple polyline sparkline fallback
+    const max = Math.max(...data, 1);
+    const pts = data.map((v, i) => {
+        const x = (i / (data.length - 1)) * 100;
+        const y = 28 - (v / max) * 24;
+        return `${x},${y}`;
+    }).join(' ');
+    svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+    svg.setAttribute('viewBox', `0 0 100 28`);
+    svg.setAttribute('preserveAspectRatio', 'none');
+}
+
+// ─── APEX AI — MULTI-AGENT STREAMING ──────────────────────
+window.runApexAI = function() {
+    const term = document.getElementById('ai-terminal');
+    term.style.display = 'block';
+    term.innerHTML = '<span class="cmd-line">> APEX KERNEL v7.2 — CONNEXION SÉCURISÉE...\n> 5 AGENTS EN LIGNE...\n> INJECTION BIO-DATA...\n</span>';
+
+    const { score } = calcReadiness();
+    const input = document.getElementById('ia-input').value;
+    const totalProt = S.meals.reduce((a,m) => a+m.prot, 0);
+
+    const prompt = `Tu es APEX OS — un système multi-agent de bio-optimisation ultra-personnel.
+    
+BIO-DATA TEMPS RÉEL :
+- Readiness: ${score}/100
+- Hydratation: ${S.water}L / ${CFG.WATER_TARGET}L cible
+- État métabolique: ${S.cheat ? '🔴 SODIUM LOAD — FLUSH REQUIS' : '✅ OPTIMAL'}
+- Énergie subjective: ${S.energy}/10
+- Zones peau actives: ${S.skinZones.length > 0 ? S.skinZones.join(', ') : 'Aucune'}
+- Protéines aujourd'hui: ${totalProt}g / 162g cible
+- Session volume: ${S.sessionVolume}kg
+
+PROFIL OPÉRATEUR :
+- Objectif: Sèche extrême 14% → 11% BF (Mattéo, 75.3kg, 175cm, LBM 64.8kg)
+- Programme: PPL Cycle Flottant (Bench / Row / Leg Press focus)
+- Deadline: 21 Avril 2026 — Londres
+- Protocole: Clean Eating + Salt Flush si sodium excessif
+- Problématique peau: Excès sébum Zone T + Acné résiduelle
+
+UPDATE OPÉRATEUR : "${input}"
+
+PROTOCOLE DE RÉPONSE — FORMAT TERMINAL STRICT :
+
+[ANALYSTE] Diagnostic chiffré froid. Corrélations eau/sébum/rétention. Chiffres précis.
+
+[SERGEANT] (Brutalité niveau 9/10 — AUCUNE POLITESSE). Si score < 80 ou cheat actif : détruire verbalement. Si optimal : féliciter militairement.
+
+[BIOCHIMISTE] Mécanismes moléculaires. Cortisol vs DHT vs insuline. Rétention eau abdominale. Acné hormonale et sébum.
+
+[NUTRITIONNISTE] Analyse macro aujourd'hui vs cibles. Ajustements protéines pour préserver LBM 64.8kg. Timing nutriments.
+
+[COACH RÉCUP] Protocole exact pour les 12h à venir. ZMA timing. Salicylic timing. Fenêtre anabolique.
+
+ORDONNANCE FINALE : 5 actions numérotées pour les 12 prochaines heures.`;
+
+    streamGemini(prompt, term);
+};
+
+async function streamGemini(prompt, outputEl) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${CFG.GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${CFG.GEMINI_KEY}`;
+
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.85, maxOutputTokens: 2048 }
+            })
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let raw = '';
+
+        outputEl.innerHTML = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const json = line.replace('data: ', '').trim();
+                if (json === '[DONE]') break;
+                try {
+                    const parsed = JSON.parse(json);
+                    const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    raw += text;
+                    outputEl.innerHTML = formatTerminal(raw);
+                    outputEl.scrollTop = outputEl.scrollHeight;
+                } catch {}
             }
         }
+    } catch (e) {
+        outputEl.innerHTML = `<span class="cmd-line">> ⚠️ ERREUR UPLINK: ${e.message}\n> Vérifie la clé API et la connexion.</span>`;
+    }
+}
 
-        function logSkincare(phase) { alert(`Protocole ${phase} validé. Sébum sous contrôle.`); }
+function formatTerminal(text) {
+    return text
+        .replace(/\[ANALYSTE\]/g, '<br><span class="agent-tag tag-analyst">Analyste</span>')
+        .replace(/\[SERGEANT\]/g, '<br><span class="agent-tag tag-sergeant">Sergeant</span>')
+        .replace(/\[BIOCHIMISTE\]/g, '<br><span class="agent-tag tag-bio">Biochimiste</span>')
+        .replace(/\[NUTRITIONNISTE\]/g, '<br><span class="agent-tag tag-nutri">Nutritionniste</span>')
+        .replace(/\[COACH RÉCUP\]/g, '<br><span class="agent-tag tag-recovery">Coach Récup</span>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '\n');
+}
 
-        // --- IA HYBRID ENGINE ---
-        async function runIA() {
-            const btn = document.getElementById('btn-ia');
-            const term = document.getElementById('terminal');
-            const ctx = document.getElementById('ia-context').value || "Aucun update précis.";
-            
-            btn.innerText = "CONNEXION SATELLITE...";
-            term.style.display = "block"; term.innerText = "> Analyse Biochimique en cours...";
+// ─── NOTIFICATIONS ────────────────────────────────────────
+window.requestNotifications = async function() {
+    if (!('Notification' in window)) return alert('Notifications non supportées.');
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+        scheduleReminders();
+        new Notification('APEX OS Activé', { body: 'Rappels Bio-Sync configurés.', icon: './icon.png' });
+    }
+};
 
-            const apiKey = "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA"; 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-            const prompt = `Tu es APEX OS, une IA hybride (Moitié Sergent Instructeur brutal, Moitié Biochimiste expert). 
-            Cible: Peau sur l'os (11% BF). Variables actuelles: Eau: ${db.water}L.
-            Update du soldat: "${ctx}".
-            Règles: 
-            1. Si le soldat rate la salle ou mange mal, détruis-le verbalement (Sergent) puis explique scientifiquement (Biochimiste) comment le pic d'insuline ou le sel va ruiner ses abdos.
-            2. Dicte le plan d'urgence (Suppléments à prendre, eau à boire).
-            3. Reste concis, format terminal de commande.`;
-
-            try {
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-                const data = await res.json();
-                term.innerText = data.candidates[0].content.parts[0].text;
-            } catch(e) { term.innerText = "> ERREUR SYSTÈME. API OFFLINE."; }
-            
-            btn.innerText = "INITIER ANALYSE BIO-CHIMIQUE";
+function scheduleReminders() {
+    // Rappel hydratation toutes les 90 min
+    setInterval(() => {
+        if (S.water < CFG.WATER_TARGET && document.hidden) {
+            new Notification('💧 Hydratation', { body: `${S.water.toFixed(1)}L / ${CFG.WATER_TARGET}L — Bois maintenant.` });
         }
+    }, 90 * 60 * 1000);
+}
 
-        window.onload = init;
-    </script>
+// ─── PERSIST ──────────────────────────────────────────────
+async function persist() {
+    await set('apex_v72', S);
+}
+
+// ─── RESTORE UI ───────────────────────────────────────────
+function restoreUI() {
+    document.getElementById('water-val').textContent = S.water.toFixed(2).replace('.', ',');
+    document.getElementById('water-bar').style.width = Math.min(100, S.water / CFG.WATER_TARGET * 100) + '%';
+    document.getElementById('tonnage-val').innerHTML = `${S.sessionVolume}<span class="u">kg</span>`;
+    document.getElementById('bf-val').textContent = S.bf.toFixed(1);
+
+    Object.entries(S.checks).forEach(([id, val]) => {
+        const pill = document.getElementById(id);
+        if (!pill) return;
+        const cb = pill.querySelector('input');
+        if (cb) cb.checked = val;
+        pill.classList.toggle('done', val);
+    });
+
+    S.skinZones.forEach(id => document.getElementById(id)?.classList.add('active'));
+
+    if (S.cheat) setCheat(true);
+
+    updateSparklines();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+boot();
+</script>
 </body>
 </html>
