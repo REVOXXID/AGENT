@@ -3,204 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>APEX | Commando Dashboard</title>
+    <title>APEX | GOD MODE</title>
     <style>
         :root {
-            --bg-dark: #0f0f13;
-            --bg-card: #1c1c22;
-            --accent: #00ffcc;
-            --text-main: #ffffff;
-            --text-sub: #8e8e93;
-            --danger: #ff453a;
+            --bg-dark: #050505; --bg-card: #111111; --bg-input: #1a1a1a;
+            --accent: #00ffcc; --accent-glow: rgba(0, 255, 204, 0.3);
+            --text-main: #ffffff; --text-sub: #666666;
+            --danger: #ff2a2a; --warning: #ffb800; --hyper: #cc00ff;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); -webkit-font-smoothing: antialiased; padding-bottom: 80px; }
-        header { padding: 20px; text-align: center; border-bottom: 1px solid #333; position: sticky; top: 0; background: rgba(15, 15, 19, 0.9); backdrop-filter: blur(10px); z-index: 100; }
-        h1 { font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
-        .container { padding: 20px; }
-        .card { background: var(--bg-card); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        h2 { font-size: 18px; margin-bottom: 15px; color: var(--text-main); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); padding-bottom: 90px; }
         
-        /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-box { background: #2a2a32; padding: 15px; border-radius: 12px; text-align: center; }
-        .stat-value { font-size: 22px; font-weight: bold; color: var(--accent); margin: 5px 0; }
-        .stat-label { font-size: 12px; color: var(--text-sub); text-transform: uppercase; }
+        header { padding: 20px; background: #000; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        h1 { font-size: 20px; font-weight: 900; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 15px var(--accent-glow); }
+        .sys-status { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); padding: 4px 8px; border-radius: 4px; }
+        .sys-status.alert { color: var(--danger); border-color: var(--danger); text-shadow: 0 0 5px red; }
 
-        /* Inputs & Buttons */
-        textarea, input { width: 100%; background: #2a2a32; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
-        button { background: var(--accent); color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        button:active { opacity: 0.8; }
+        .container { padding: 15px; }
+        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); }
+        h2 { font-size: 14px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+
+        /* Inputs & Grids */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: var(--bg-input); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #222; }
+        .stat-val { font-size: 24px; font-weight: bold; color: var(--text-main); margin-bottom: 5px; }
+        .stat-label { font-size: 10px; color: var(--text-sub); text-transform: uppercase; }
+
+        input, select { width: 100%; background: var(--bg-input); border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; font-size: 14px; margin-bottom: 10px; }
+        input:focus { border-color: var(--accent); outline: none; }
         
-        /* Checklists */
-        .check-item { display: flex; align-items: center; margin-bottom: 12px; padding: 10px; background: #2a2a32; border-radius: 8px; }
-        .check-item input[type="checkbox"] { width: 20px; height: 20px; margin: 0 15px 0 0; accent-color: var(--accent); }
-        .check-item label { font-size: 14px; flex-grow: 1; }
+        button.cyber-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 15px; width: 100%; font-weight: 800; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: 6px; }
+        button.cyber-btn:active { background: var(--accent); color: #000; }
 
-        /* Navigation Bottom */
-        nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 100; }
-        .nav-btn { background: none; color: var(--text-sub); border: none; font-size: 12px; flex-direction: column; align-items: center; display: flex; width: auto; padding: 5px; }
-        .nav-btn.active { color: var(--accent); }
+        /* Terminal */
+        #ai-terminal { background: #000; padding: 20px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px; border: 1px solid #333; margin-top: 15px; color: var(--accent); display: none; white-space: pre-wrap; line-height: 1.5; }
 
-        /* Tabs */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* AI Response */
-        #ai-response { background: #2a2a32; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; margin-top: 15px; display: none; border-left: 3px solid var(--accent); }
+        /* Navigation */
+        nav { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; border-top: 1px solid #222; z-index: 100; }
+        .nav-btn { flex: 1; background: none; color: #444; border: none; padding: 20px 0; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+        .nav-btn.active { color: var(--text-main); border-top: 2px solid var(--accent); background: linear-gradient(0deg, rgba(0,255,204,0.1) 0%, rgba(0,0,0,0) 100%); }
+        .tab { display: none; }
+        .tab.active { display: block; animation: scanline 0.3s; }
+        @keyframes scanline { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>APEX</h1>
+        <h1>APEX<span style="color:#fff">V3</span></h1>
+        <div class="sys-status" id="system-status">SYNC: ONLINE</div>
     </header>
 
     <div class="container">
         
-        <div id="tab-dash" class="tab-content active">
+        <div id="tab-bio" class="tab active">
             <div class="card">
-                <h2>Cible : Peau sur l'os</h2>
-                <div class="stats-grid">
+                <h2>Cible: Peau sur l'os</h2>
+                <div class="grid-2">
                     <div class="stat-box">
-                        <div class="stat-label">Poids Actuel</div>
-                        <div class="stat-value">75.3 kg</div>
+                        <div class="stat-val" id="display-water">0 L</div>
+                        <div class="stat-label">Hydratation (Cible 4.5L)</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">Objectif</div>
-                        <div class="stat-value">73.5 kg</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">Body Fat %</div>
-                        <div class="stat-value">14.0 %</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">Cible BF %</div>
-                        <div class="stat-value">11-12 %</div>
+                        <div class="stat-val" id="display-cortisol">Low</div>
+                        <div class="stat-label">Index Cortisol</div>
                     </div>
                 </div>
+                <input type="number" id="input-water" placeholder="Ajouter de l'eau (ex: 1.5 pour 1.5L)" step="0.1">
+                <button class="cyber-btn" onclick="addWater()" style="padding: 10px; font-size: 12px;">Log Eau</button>
             </div>
 
-            <div class="card">
-                <h2>Hydratation (Objectif: 4.5L)</h2>
-                <div class="check-item"><input type="checkbox" id="water1"><label for="water1">Matin : 1.5L + Citron</label></div>
-                <div class="check-item"><input type="checkbox" id="water2"><label for="water2">Journée : 1.5L Pure</label></div>
-                <div class="check-item"><input type="checkbox" id="water3"><label for="water3">Soir/Salle : 1.5L + Électrolytes</label></div>
-            </div>
-            
-            <div class="card">
-                <h2>ZMA Timer</h2>
-                <p style="font-size: 14px; color: var(--text-sub); margin-bottom: 10px;">Dernier repas terminé à :</p>
-                <input type="time" id="meal-time" style="width: auto; display: inline-block;">
-                <button onclick="calculateZMA()" style="width: auto; padding: 10px 20px; margin-left: 10px;">Calculer</button>
-                <p id="zma-result" style="margin-top: 15px; font-weight: bold; color: var(--accent);"></p>
+            <div class="card" style="border-left-color: var(--hyper);">
+                <h2 style="color: var(--hyper);">Bio-Sync: Peau & Barbe</h2>
+                <div style="font-size: 12px; color: #888; margin-bottom: 10px;">Le collagène et l'acide hyaluronique ont besoin d'eau pour fonctionner. La biotine nécessite une exfoliation.</div>
+                <label style="font-size: 10px; color: var(--text-sub);">Skincare Routine</label>
+                <select id="skin-status" onchange="checkBioSync()">
+                    <option value="none">En attente...</option>
+                    <option value="am">Matin (Cleanser + HA + CeraVe)</option>
+                    <option value="pm">Soir (Salicylic + HA + CeraVe)</option>
+                </select>
+                <div id="bio-warning" style="color: var(--warning); font-size: 11px; margin-top: 10px; display: none;">⚠️ ALERTE: Eau insuffisante (< 2L). L'Acide Hyaluronique risque d'assécher la peau.</div>
             </div>
         </div>
 
-        <div id="tab-coach" class="tab-content">
+        <div id="tab-gym" class="tab">
+            <div class="card" style="border-left-color: white;">
+                <h2 style="color: white;">Calculateur 1RM (Densité)</h2>
+                <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Moteur algorithmique Epley. Rentre ta meilleure série pour savoir si ta masse musculaire stagne ou progresse.</p>
+                <div class="grid-2">
+                    <input type="number" id="lift-weight" placeholder="Poids (kg)">
+                    <input type="number" id="lift-reps" placeholder="Reps">
+                </div>
+                <button class="cyber-btn" onclick="calculate1RM()" style="border-color: white; color: white;">Calculer Force Max</button>
+                <div id="orm-result" style="margin-top: 15px; font-size: 18px; font-weight: bold; color: var(--accent); text-align: center;"></div>
+            </div>
+
             <div class="card">
-                <h2>Update APEX</h2>
-                <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 15px;">Heure salle, volume d'eau, fatigue, écarts...</p>
-                <textarea id="ai-input" rows="5" placeholder="Ex: Salle à 22h, j'en suis à 2L d'eau, j'ai mangé un bout de pain à midi..."></textarea>
-                <button onclick="callGemini()" id="btn-ai">Envoyer au Coach</button>
-                <div id="ai-response"></div>
+                <h2>Timing Salle & Supps</h2>
+                <input type="time" id="gym-time" onchange="saveData()">
+                <div style="font-size: 11px; color: #888; margin-top: 10px;">Post-Workout Lock: Whey + 5g Créatine + 3x Collagène.</div>
             </div>
         </div>
 
-        <div id="tab-supps" class="tab-content">
-            <div class="card">
-                <h2>Matin / Petit-Déj</h2>
-                <div class="check-item"><input type="checkbox"><label>2x Omega-3</label></div>
-                <div class="check-item"><input type="checkbox"><label>2x Lion's Mane</label></div>
-                <div class="check-item"><input type="checkbox"><label>1x Bacteria</label></div>
-                <div class="check-item"><input type="checkbox"><label>1x Électrolyte</label></div>
-                <div class="check-item"><input type="checkbox"><label>1x B-Complex</label></div>
-                <div class="check-item"><input type="checkbox"><label>1x Ashwagandha</label></div>
-                <div class="check-item"><input type="checkbox"><label>2x Biotine 1000ug</label></div>
+        <div id="tab-ia" class="tab">
+            <div class="card" style="border-left-color: var(--danger);">
+                <h2 style="color: var(--danger);">Nutrition & Protocoles</h2>
+                <input type="text" id="food-log" placeholder="Repas du jour (ex: Poulet, Asperges...)" onchange="saveData()">
+                <select id="cheat-status" onchange="triggerFlushProtocol()">
+                    <option value="clean">Mode: 100% Clean (Sèche)</option>
+                    <option value="cheat">Mode: Écart détecté (KFC/Pizza/Sel)</option>
+                </select>
             </div>
 
-            <div class="card">
-                <h2>Pré / Post Salle</h2>
-                <div class="check-item"><input type="checkbox"><label>Pré: 1x Glucosamine</label></div>
-                <div class="check-item"><input type="checkbox"><label>Pré: 1x Électrolyte</label></div>
-                <div class="check-item"><input type="checkbox"><label>Post: Whey + 5g Créatine</label></div>
-                <div class="check-item"><input type="checkbox"><label>Post: 3x Collagène Marin</label></div>
-            </div>
-
-            <div class="card">
-                <h2>Nuit (Dîner & Coucher)</h2>
-                <div class="check-item"><input type="checkbox"><label>Dîner: 1x Bacteria</label></div>
-                <div class="check-item"><input type="checkbox"><label>Coucher: 2x ZMA (2h après repas)</label></div>
-            </div>
+            <button class="cyber-btn" onclick="runApexCore()" id="btn-run">>>> EXECUTE CORE IA <<<</button>
+            <div id="ai-terminal"></div>
         </div>
 
     </div>
 
     <nav>
-        <button class="nav-btn active" onclick="switchTab('dash', this)">DASHBOARD</button>
-        <button class="nav-btn" onclick="switchTab('coach', this)">COACH IA</button>
-        <button class="nav-btn" onclick="switchTab('supps', this)">STACK</button>
+        <button class="nav-btn active" onclick="switchTab('bio', this)">BIO-SYNC</button>
+        <button class="nav-btn" onclick="switchTab('gym', this)">GYM / 1RM</button>
+        <button class="nav-btn" onclick="switchTab('ia', this)">CORE IA</button>
     </nav>
 
     <script>
-        // Navigation Tabs
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        // --- 1. LOCAL STORAGE SYSTEM ---
+        let db = JSON.parse(localStorage.getItem('apexDB')) || { water: 0, gymTime: '', food: '', cheat: 'clean' };
+
+        function loadData() {
+            document.getElementById('display-water').innerText = db.water.toFixed(1) + " L";
+            document.getElementById('gym-time').value = db.gymTime;
+            document.getElementById('food-log').value = db.food;
+            document.getElementById('cheat-status').value = db.cheat;
+            checkBioSync();
+            triggerFlushProtocol(true);
+        }
+
+        function saveData() {
+            db.gymTime = document.getElementById('gym-time').value;
+            db.food = document.getElementById('food-log').value;
+            db.cheat = document.getElementById('cheat-status').value;
+            localStorage.setItem('apexDB', JSON.stringify(db));
+        }
+
+        // --- 2. WATER & BIO-SYNC MATRIX ---
+        function addWater() {
+            let add = parseFloat(document.getElementById('input-water').value);
+            if(add > 0) {
+                db.water += add;
+                localStorage.setItem('apexDB', JSON.stringify(db));
+                document.getElementById('display-water').innerText = db.water.toFixed(1) + " L";
+                document.getElementById('input-water').value = '';
+                checkBioSync();
+            }
+        }
+
+        function checkBioSync() {
+            let skin = document.getElementById('skin-status').value;
+            let warn = document.getElementById('bio-warning');
+            if(skin !== 'none' && db.water < 2.0) { warn.style.display = 'block'; } 
+            else { warn.style.display = 'none'; }
+        }
+
+        // --- 3. 1RM AUTO-REGULATOR (Epley Formula) ---
+        function calculate1RM() {
+            let w = parseFloat(document.getElementById('lift-weight').value);
+            let r = parseFloat(document.getElementById('lift-reps').value);
+            if(w > 0 && r > 0) {
+                let orm = w * (1 + (r / 30));
+                document.getElementById('orm-result').innerText = `🔥 1RM Estimé : ${orm.toFixed(1)} kg`;
+            }
+        }
+
+        // --- 4. FLUSH PROTOCOL DETECTOR ---
+        function triggerFlushProtocol(isLoad = false) {
+            if(!isLoad) saveData();
+            let status = document.getElementById('system-status');
+            if(db.cheat === 'cheat') {
+                status.innerText = "SALT FLUSH ACTIVÉ";
+                status.className = "sys-status alert";
+            } else {
+                status.innerText = "SYNC: ONLINE";
+                status.className = "sys-status";
+            }
+        }
+
+        // --- 5. CORE IA EXECUTION ---
+        async function runApexCore() {
+            const btn = document.getElementById('btn-run');
+            const term = document.getElementById('ai-terminal');
+            btn.innerText = "PROCESSING..."; term.style.display = "block"; term.innerText = "> Uplink established...\n> Compiling biology data...";
+
+            const apiKey = "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const prompt = `Tu es APEX V3, mon terminal de bio-hacking. Cible: 11% BF, peau ultra-fine, masse dense, barbe optimale. 
+            MES DATA EN DIRECT:
+            - Eau bue: ${db.water}L (Objectif: 4.5L)
+            - Repas: ${db.food}
+            - Salle à: ${db.gymTime}
+            - Mode: ${db.cheat === 'cheat' ? 'SALT FLUSH URGENCE (Sodium détecté)' : 'SÈCHE OPTIMALE'}
+            - Skincare actuelle: ${document.getElementById('skin-status').value}
+            
+            MISSION:
+            1. Analyse la data. Si l'eau est < 3L et qu'il est tard, ordonne de boire.
+            2. Dicte le timing exact de ma stack (Ashwagandha, ZMA, Whey, Creatine, Biotine).
+            3. Si mode SALT FLUSH est actif, génère un plan d'attaque cardio/électrolytes immédiat.
+            Sois chirurgical, type interface militaire. Pas de bonjour.`;
+
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                const data = await res.json();
+                term.innerText = data.candidates[0].content.parts[0].text;
+            } catch (e) {
+                term.innerText = "> ERROR 404: GEMINI API OFFLINE.";
+            }
+            btn.innerText = ">>> EXECUTE CORE IA <<<";
+        }
+
+        // --- TABS ---
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('tab-'+id).classList.add('active');
             btn.classList.add('active');
         }
 
-        // ZMA Timer
-        function calculateZMA() {
-            const mealTime = document.getElementById('meal-time').value;
-            if(!mealTime) return;
-            let [hours, minutes] = mealTime.split(':').map(Number);
-            hours = (hours + 2) % 24;
-            const formattedTime = `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}`;
-            document.getElementById('zma-result').innerText = `🚨 Prise du ZMA à : ${formattedTime}`;
-        }
-
-        // Gemini AI Call
-        async function callGemini() {
-            const input = document.getElementById('ai-input').value;
-            const btn = document.getElementById('btn-ai');
-            const responseDiv = document.getElementById('ai-response');
-            
-            if(!input) return;
-
-            btn.innerText = "Calcul en cours...";
-            btn.style.opacity = "0.5";
-            responseDiv.style.display = "none";
-
-            const apiKey = "AIzaSyAQfbkAH8-ho5IvOYSjw2Pt2XfUrgof6bA"; // Clé intégrée
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            const systemPrompt = `Tu es APEX, coach strict. Cible: 73.5kg, 11-12% BF (Peau sur l'os). Règles: ZMA 2h après repas, Eau 4.5L/j. Si écart -> Salt Flush. L'utilisateur te donne ses updates. Réponds de façon militaire, courte, et donne le planning ajusté.`;
-
-            const payload = {
-                contents: [{ parts: [{ text: `Système: ${systemPrompt}\n\nUpdate du jour: ${input}` }] }]
-            };
-
-            try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                const text = data.candidates[0].content.parts[0].text;
-                
-                responseDiv.innerText = text;
-                responseDiv.style.display = "block";
-            } catch (error) {
-                responseDiv.innerText = "Erreur de connexion au QG. Vérifie le réseau.";
-                responseDiv.style.display = "block";
-            }
-
-            btn.innerText = "Envoyer au Coach";
-            btn.style.opacity = "1";
-        }
+        // Init
+        window.onload = loadData;
     </script>
 </body>
 </html>
