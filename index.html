@@ -15,8 +15,20 @@ html,body{height:100%;overflow:hidden;background:#000;color:var(--text);font-fam
 input,select,textarea{-webkit-user-select:auto;user-select:auto;font-family:inherit}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 #onboard{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--safe-t) + 20px) 24px calc(var(--safe-b) + 40px)}
-.ob-step{display:none;flex-direction:column;gap:20px;min-height:100%}
-.ob-step.active{display:flex}
+.ob-step{
+  display:none;
+  flex-direction:column;
+  gap:20px;
+  min-height:100%;
+  opacity:0;
+  transform:translateX(8px);
+  transition:opacity .25s ease-out,transform .25s ease-out;
+}
+.ob-step.active{
+  display:flex;
+  opacity:1;
+  transform:translateX(0);
+}
 .ob-logo{font-size:28px;font-weight:900;letter-spacing:-1.5px;margin-bottom:8px}
 .ob-logo span{color:var(--green)}
 .ob-h{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.2}
